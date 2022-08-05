@@ -1,3 +1,17 @@
+# Functions that can be used to analyze the linkage data from Claudia Haase's group
+#
+# general use :
+#
+# $ R
+# > source("analyzeLinkageData.R")
+# > df <- readData("inputfile.csv") # read in the data (in inputfile.csv) and format it correctly
+# > usedf <- runPearsonsCouple(df, 1, "Negative", 15) # get the Pearson's correlation statistics for couple 1 using the "Negative" conversation with a window of 15 seconds
+# > f <- plotPearsonsCouple(usedf) # generate a figure for this particular subset of the data
+# > outdf <- runPearsonsAll(df, 15) # calculate the Pearson's statistics for every couple and conversation in the data set with window of 15 seconds
+# > exportToFile(outdf, "outputfile.csv") # write the output dataframe to a csv file names outputfile.csv
+#
+# This script is also used within the Shiny app
+
 readData <- function(filename){
 	# read the data and format the columns for use with the other functions in this file
 	df <- read.csv(filename)
