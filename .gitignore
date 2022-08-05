@@ -1,0 +1,12 @@
+# data files *
+#####################
+*.csv
+
+# vim files # 
+###################
+*.swp
+
+rsconnect
+data
+.RData
+.Rhistory
