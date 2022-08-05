@@ -19,8 +19,18 @@ readData <- function(filename){
 	df$Ind_ID = as.factor(df$Ind_ID)
 	df$Couple_ID = as.factor(df$Couple_ID)
 	df$conversation = as.factor(df$conversation)
-	
-	return(df)
+
+	# remove any "couples" that only have a single Ind_ID value
+	bad <- c()
+	for (CoupleID in unique(df$Couple_ID)){
+		usedf <- df[df$Couple_ID == CoupleID,]
+		if (length(unique(usedf$Ind_ID)) != 2){
+			bad <- append(bad, CoupleID)
+		}
+	}
+
+
+	return(df[! df$Couple_ID %in% bad, ])
 }
 
 runPearsonsCouple <- function(df, coupleID, conversation, window){
@@ -102,20 +112,17 @@ plotPearsonsCouple <- function(usedf){
 	fee <- select(usedf, intervalStartTime, meanIBI, Ind_ID)
 	foo <- select(usedf[usedf$Ind_ID == Ind_IDs[1],], intervalStartTime, pearson_correlation_coefficient)
 	bar <- select(usedf[usedf$Ind_ID == Ind_IDs[1],], intervalStartTime, pearson_correlation_pvalue)
+	fee$Ind_ID <- paste(fee$Ind_ID, "meanIBI")
 	foo$Ind_ID <- "Pearson coefficient"
 	bar$Ind_ID <- "Pearson p-value"
-	names(fee) <- c("intervalStartTime", "value","group")
-	names(foo) <- c("intervalStartTime", "value","group")
-	names(bar) <- c("intervalStartTime", "value","group")
+	names(fee) <- c("Interval Start Time (s)", "value","group")
+	names(foo) <- c("Interval Start Time (s)", "value","group")
+	names(bar) <- c("Interval Start Time (s)", "value","group")
 	plotData <- rbind(fee, foo, bar)
 
-	# get the conversation for the title (there should be only one)
-	conversation <- unique(usedf$conversation)
-
 	# generate the plot
-	f <- ggplot(data=plotData, aes(x=intervalStartTime, y=value, group=group)) +
+	f <- ggplot(data=plotData, aes(x=.data[["Interval Start Time (s)"]], y=value, group=group)) +
 		geom_line() + geom_point() +
-		labs(title=paste(conversation)) +
 		facet_grid(rows = vars(group), scales = "free_y", switch = "y",
 			labeller = as_labeller(c())
 			) +
@@ -124,6 +131,25 @@ plotPearsonsCouple <- function(usedf){
 			strip.placement = "outside") # put labels to the left of the axis text
 
 	return(f)
+}
+
+plotlyPearsonsCouple <- function(f){
+	# convert the figure above into a plotly version for Shiny
+	gp <- ggplotly(f, height = 800)
+
+	# need to move the labels when using plotly (I suppose it doesn' use the theme values from ggplot)
+	gp[["x"]][["layout"]][["annotations"]][[2]][["x"]] <- -0.06
+	gp[["x"]][["layout"]][["annotations"]][[3]][["x"]] <- -0.06
+	gp[["x"]][["layout"]][["annotations"]][[4]][["x"]] <- -0.06
+	gp[["x"]][["layout"]][["annotations"]][[5]][["x"]] <- -0.06
+
+	# rotate the labels to the proper orientation
+	gp[["x"]][["layout"]][["annotations"]][[2]][["textangle"]] <- -90
+	gp[["x"]][["layout"]][["annotations"]][[3]][["textangle"]] <- -90
+	gp[["x"]][["layout"]][["annotations"]][[4]][["textangle"]] <- -90
+	gp[["x"]][["layout"]][["annotations"]][[5]][["textangle"]] <- -90
+
+	return(gp)
 }
 
 runPearsonsAll <- function(df, window){
