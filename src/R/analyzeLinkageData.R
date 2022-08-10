@@ -164,23 +164,40 @@ runPearsonsAll <- function(df, window, columnID = "meanIBI"){
 
 	# unique dyads
 	Couple_IDs <- unique(df$Couple_ID)
+	conversations <- unique(df$conversation)
 
 	# loop over the couples (dyads)
+	if (interactive()){
+		withProgress(message = 'Analyzing data', value = 0, {
+			outdf <- runPearsonsAllLoop(df, outdf, Couple_IDs, conversations, window, columnID)
+		})
+	} else {
+		outdf <- runPearsonsAllLoop(df, outdf, Couple_IDs, conversations, window, columnID)
+	}
+
+	return(outdf)
+
+}
+runPearsonsAllLoop <- function(df, outdf, Couple_IDs, conversations, window, columnID){
+	# separating this out into another function so that I can have a version that I can control if I show a progress bar
+
+	nTotal <- length(Couple_IDs)*length(conversations)
 	for (CoupleID in Couple_IDs){
 		# select the couple in order to get the unique conversations
 		df0 <- df[df$Couple_ID == CoupleID, ]
 
-		# unique conversations
+		# unique conversations (redefine this incase there are different conversations for each dyad)
 		conversations <- unique(df0$conversation)
 
 		# loop over the conversations
 		for (conv in conversations){
-			print(paste(CoupleID, conv))
 
 			# run the Pearson's correlation
 			usedf <- runPearsonsCouple(df, CoupleID, conv, window, columnID)
 
 			outdf <- rbind(outdf, usedf)
+			if (interactive()) incProgress(1./nTotal, detail = paste(CoupleID, conv))
+			if (! interactive()) print(paste(CoupleID, conv))
 
 		}
 

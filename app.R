@@ -47,7 +47,8 @@ ui <- fluidPage(
 			".csv")
 		),
 		tags$hr(),
-		uiOutput("uiStep2")
+		uiOutput("uiStep2"),
+		uiOutput("uiStep3"),
 
 	),
 
@@ -71,6 +72,7 @@ server <- function(input, output) {
 		input$file1
 		isolate({
 			hide("uiStep2")
+			hide("uiStep3")
 			hide("mainPanel")
 
 			# read in the file
@@ -91,9 +93,11 @@ server <- function(input, output) {
 
 			output$uiStep2 <- renderUI(
 				div(id = "uiStep2",
+					hr(style = "border-top: 1px solid #000000;"),
+
 					h5("2. Select the subset of the data you want to analyze."),
 					selectInput(
-						"coupleID", "Couple ID:",
+						"coupleID", "Dyad ID:",
 						Couple_IDs,
 						selected = "1"
 					),
@@ -104,14 +108,24 @@ server <- function(input, output) {
 					),
 
 					h5("3. Select the time window for the Pearson's correlation."),
-					sliderInput("window", "Window (s) :", 0, 600, 15, step = 1),
+					sliderInput("window", "Window (seconds) :", 0, 600, 15, step = 1),
 
 					h5("4. Click the button below to update the plot."),
 					actionButton("updatePlot", "Update Plot"),
 				)
 			)
 
+			output$uiStep3 <- renderUI(
+				div(id = "uiStep3", style="padding-top:30px",
+					hr(style = "border-top: 1px solid #000000;"),
+
+					h5("5. Click the button below to analyze all dyads and conversations and download the data as a .csv file."),
+					downloadButton("runAll", "Run All and Download"),
+				)
+			)
+
 			show("uiStep2")
+			show("uiStep3")
 
 		})
 	})
@@ -138,6 +152,18 @@ server <- function(input, output) {
 
 
 	})
+
+	output$runAll <- downloadHandler(
+		filename = function() {
+			paste0('linkageData-', Sys.Date(), '.csv')
+		},
+		content = function(con) {
+			outdf <- runPearsonsAll(df, input$window)
+			write.csv(outdf, con, row.names = FALSE)
+		}
+	)
+
+
 
 }
 
