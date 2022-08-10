@@ -1,14 +1,14 @@
 # Shiny Linkage Analysis
 A Shiny app to investigate Pearson's correlations in biometric data.
 
-This app can be run in a standard R session within this directory by typing the following commands in a terminal:
+This app can be run in a standard R session within the root directory of this repo by typing the following commands in a terminal:
 ```
 $ R
 > library(shiny)
 > runApp()
 ```
 
-The Shiny app uses R functions that can also operate outside the Shiny app, for instance within RStudio:
+You can also use the same functions outside the Shiny app (for instance within RStudio):
 
 ```
 # First, load in the R script
@@ -28,7 +28,7 @@ The Shiny app uses R functions that can also operate outside the Shiny app, for 
 
 ```
 # generate a figure for this particular subset of the data 
-> f <- plotPearsonsCouple(usedf) 
+> plotPearsonsCouple(usedf) 
 ```
 
 ```
@@ -38,6 +38,6 @@ The Shiny app uses R functions that can also operate outside the Shiny app, for 
 ```
 
 ```
-# write the output dataframe to a csv file names outputfile.csv
+# write the output dataframe to a csv file named outputfile.csv
 > exportToFile(outdf, "outputfile.csv") 
 ```
