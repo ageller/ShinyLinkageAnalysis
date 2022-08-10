@@ -33,7 +33,7 @@ readData <- function(filename){
 	return(df[! df$Couple_ID %in% bad, ])
 }
 
-runPearsonsCouple <- function(df, coupleID, conversation, window){
+runPearsonsCouple <- function(df, coupleID, conversation, window, columnID = "meanIBI"){
 	# select the dyad and the conversation
 	usedf <- df[df$Couple_ID == coupleID & df$conversation == conversation,]
 
@@ -67,18 +67,18 @@ runPearsonsCouple <- function(df, coupleID, conversation, window){
 			
 			# select the rows in the data frame within the time window for the first person
 			rows0 <- usedf[usedf$Ind_ID == Ind_IDs[1] & 
-						   usedf$intervalStartTime > currentTime - offset & 
-						   usedf$intervalStartTime < currentTime + offset, ]
+						   usedf$intervalStartTime >= currentTime - offset & 
+						   usedf$intervalStartTime <= currentTime + offset, ]
 			
 			# select the rows in the data frame within the time window for the second person
 			rows1 <- usedf[usedf$Ind_ID == Ind_IDs[2] & 
-						   usedf$intervalStartTime > currentTime - offset & 
-						   usedf$intervalStartTime < currentTime + offset, ]
+						   usedf$intervalStartTime >= currentTime - offset & 
+						   usedf$intervalStartTime <= currentTime + offset, ]
 			
 			# if each of these subsets of data are the same length, then calculate the Pearson's correlation
-			if (nrow(rows0) == nrow(rows1) & sum(!is.na(rows0$meanIBI)) > 2 & sum(!is.na(rows1$meanIBI)) > 2){
+			if (nrow(rows0) == nrow(rows1) & sum(!is.na(rows0[[columnID]])) > 2 & sum(!is.na(rows1[[columnID]])) > 2){
 				havePcor <- TRUE
-				foo <- cor.test(rows0$meanIBI, rows1$meanIBI, method = "pearson")
+				foo <- cor.test(rows0[[columnID]], rows1[[columnID]], method = "pearson")
 				pcor[i] <- foo$estimate
 				ppcor[i] <- foo$p.value
 			}
@@ -102,17 +102,17 @@ runPearsonsCouple <- function(df, coupleID, conversation, window){
 }
 
 
-plotPearsonsCouple <- function(usedf){
+plotPearsonsCouple <- function(usedf, columnID = "meanIBI"){
 	# this assumes output from the runPearsonsCouple function
 
 	# unique people
 	Ind_IDs <- unique(usedf$Ind_ID)
 
 	# create a new dataframe that I can be used with ggplot facets
-	fee <- select(usedf, intervalStartTime, meanIBI, Ind_ID)
+	fee <- usedf[, c('intervalStartTime', columnID, 'Ind_ID')]
 	foo <- select(usedf[usedf$Ind_ID == Ind_IDs[1],], intervalStartTime, pearson_correlation_coefficient)
 	bar <- select(usedf[usedf$Ind_ID == Ind_IDs[1],], intervalStartTime, pearson_correlation_pvalue)
-	fee$Ind_ID <- paste(fee$Ind_ID, "meanIBI")
+	fee$Ind_ID <- paste(fee$Ind_ID, columnID)
 	foo$Ind_ID <- "Pearson coefficient"
 	bar$Ind_ID <- "Pearson p-value"
 	names(fee) <- c("Interval Start Time (s)", "value","group")
@@ -152,7 +152,7 @@ plotlyPearsonsCouple <- function(f){
 	return(gp)
 }
 
-runPearsonsAll <- function(df, window){
+runPearsonsAll <- function(df, window, columnID = "meanIBI"){
 	# generate Pearson's correlation statistics for all values in the input table
 	# across all couples and all conversations
 
@@ -178,7 +178,7 @@ runPearsonsAll <- function(df, window){
 			print(paste(CoupleID, conv))
 
 			# run the Pearson's correlation
-			usedf <- runPearsonsCouple(df, CoupleID, conv, window)
+			usedf <- runPearsonsCouple(df, CoupleID, conv, window, columnID)
 
 			outdf <- rbind(outdf, usedf)
 
