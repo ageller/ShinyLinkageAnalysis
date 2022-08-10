@@ -119,7 +119,7 @@ server <- function(input, output) {
 				div(id = "uiStep3", style="padding-top:30px",
 					hr(style = "border-top: 1px solid #000000;"),
 
-					h5("5. Click the button below to analyze all dyads and conversations and download the data as a .csv file."),
+					h5("5. Click the button below to analyze all dyads and conversations at the window specified above and download the data as a .csv file."),
 					downloadButton("runAll", "Run All and Download"),
 				)
 			)
@@ -142,8 +142,6 @@ server <- function(input, output) {
 		f <- plotPearsonsCouple(usedf)
 
 		# Render the plot using plotly (for interactivity)
-		#### Can the height be dynamic based on the page size (e.g., using css)?
-		#https://stackoverflow.com/questions/61122868/long-facet-wrap-labels-in-ggplotly-plotly-overlap-facets-strip-background
 		output$PearsonsPlot <- renderPlotly(
 			plotlyPearsonsCouple(f)
 		)
