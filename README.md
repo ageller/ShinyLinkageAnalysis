@@ -21,7 +21,8 @@ The Shiny app uses R functions that can also operate outside the Shiny app, for 
 ```
 
 ```
-# get the Pearson's correlation statistics for dyad 1 using the "Negative" conversation with a window of 15 seconds
+# get the Pearson's correlation statistics for dyad 1 using the "Negative" conversation 
+# with a window of 15 seconds
 > usedf <- runPearsonsCouple(df, 1, "Negative", 15) 
 ```
 
@@ -31,7 +32,8 @@ The Shiny app uses R functions that can also operate outside the Shiny app, for 
 ```
 
 ```
-# calculate the Pearson's statistics for every dyad and conversation in the data set with a window of 15 seconds
+# calculate the Pearson's statistics for every dyad and conversation in the data set 
+# with a window of 15 seconds
 > outdf <- runPearsonsAll(df, 15)
 ```
 
