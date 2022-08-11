@@ -34,8 +34,10 @@ ui <- fluidPage(
 		"))
 	),
 
-	# App title
+	# App title and credit
 	headerPanel("Linkage Data Explorer"),
+	div(style="font-size:14px; padding-left:18px; margin-bottom:20px",
+		"Credit: Aaron M. Geller - Northwestern University IT Research Computing Services (RCS)"),
 
 	# ui
 	sidebarPanel(
