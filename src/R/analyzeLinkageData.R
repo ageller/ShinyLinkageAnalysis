@@ -135,7 +135,7 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI"){
 
 	# generate the plot
 	f <- ggplot(data=plotData, aes(x=.data[["Interval Start Time (s)"]], y=value, group=group)) +
-		geom_line() + geom_point() +
+		geom_line() + geom_point(size=0.7) +
 		facet_grid(rows = vars(group), scales = "free_y", switch = "y",
 			labeller = as_labeller(c())
 			) +
