@@ -14,6 +14,22 @@ Once installed you can run the app with:
 > ShinyLinkageAnalysis()
 ```
 
+This should launch a web browser that contains the app.  
+
+## Using the app
+
+1. The first step is to select a data file, in .csv format, from your computer.  You can do this by clicking the "BROWSE" button.
+
+2. Once that file is loaded you will see interactive tools to select the Dyad ID, Conversation, and Window for the Pearson's correlation.  
+
+3. After you make those selections click the "UPDATE PLOT" button.  This will produce a plot using the parameters you defined in the previous step.  The top two panels of the plot show the meanIBI measures for both individuals in the selected dyad.  The bottom two figures show the corresponding Pearson's correlation coefficient and p-value (given the selected window).
+
+4. You can adjust the parameters and remake the plot as many times as you want.
+
+5. If you hover over the plot, you will see tools in the upper-right corner that enable you to zoom, pan, save the figure, etc..  Hovering over each tool will show you it's function.
+
+6. If you would like to run the Pearson's analysis on all of the dyads and all conversations in the file, using the selected window, you can click the button "RUN ALL AND DOWNLOAD".  A progress indicator will appear in the bottom-right corner.  When the analysis is complete, a file will download.  This file should contain all the data from the input file but with two additional columns for the Pearson's correlation coefficient and the p-value. 
+
 ## Using the functions outside of the Shiny app
 
 You can also use the same functions outside the Shiny app (for instance within RStudio):
