@@ -3,7 +3,7 @@
 A Shiny app to investigate Pearson's correlations in biometric data.
 
 ## Installing as a package (recommended)
-This app, and it's dependencies, can installed as a package using [remotes](https://github.com/r-lib/remotes) with the following commands within a R session:
+This app, and it's dependencies, can be installed as a package using [remotes](https://github.com/r-lib/remotes) with the following command within a R session:
 ```
 > remotes::install_github("ageller/ShinyLinkageAnalysis")
 ```
@@ -19,6 +19,7 @@ Once installed you can run the app with:
 You can also use the same functions outside the Shiny app (for instance within RStudio):
 
 ```
+# first, load the library.
 > library(ShinyLinkageAnalysis)
 ```
 
@@ -53,7 +54,8 @@ You can also use the same functions outside the Shiny app (for instance within R
 
 ## Downloading from GitHub and running locally
 
-If you prefer not to install this as a package, you can download these files (or clone this repo) from GitHub.  Then you can run this app in an R session within the root directory of this repo by typing the following commands:
+If you prefer not to install this as a package, you can download these files (or clone this repo) from GitHub.  You will also need to install all the dependecies listed in Imports within the DESCRIPTION file and also devtools.  Then you can run this app in an R session within the root directory of this repo by typing the following commands:
+
 ```
 > devtools::load_all()
 > ShinyLinkageAnalysis()
