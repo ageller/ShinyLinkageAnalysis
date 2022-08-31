@@ -52,12 +52,18 @@ You can also use the same functions outside the Shiny app (for instance within R
 
 ```
 # generate a figure for this particular subset of the data 
+# Note: there are may arguments that can be supplied to customize the plot.  
+#    These are used within the Shiny app, but are also available here.  
+#    If you would like to use them directly from the R command line and need assistance, 
+#    please contact me for details. 
 > ShinyLinkageAnalysis::plotPearsonsCouple(usedf) 
 ```
 
 ```
 # calculate the Pearson's statistics for every dyad and conversation in the data set 
-# with a window of 15 seconds
+# with a window of 15 seconds.
+# Note: this will provide a reformatted file; if the user desires to keep the current formatting, 
+#    they can supply the arg : format = "original".
 > outdf <- ShinyLinkageAnalysis::runPearsonsAll(df, 15)
 ```
 

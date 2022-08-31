@@ -4,7 +4,7 @@ library(shinythemes)
 
 library(dplyr)
 library(ggplot2)
-library(gridExtra)
+library(grid)
 
 library(plotly)
 
@@ -147,7 +147,7 @@ ShinyLinkageAnalysis <- function(){
 
 			# Render the plot using plotly (for interactivity)
 			output$PearsonsPlot <- renderPlotly(
-				plotlyPearsonsCouple(f)
+				plotlyPearsonsCouple(f, topHeightFac = 1.5)
 			)
 
 			show("mainPanel")
