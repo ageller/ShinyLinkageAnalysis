@@ -219,9 +219,9 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("orange",
 	return(f)
 }
 
-plotlyPearsonsCouple <- function(f, topHeightFac = 1){
+plotlyPearsonsCouple <- function(f, topHeightFac = 1, height = 800){
 	# convert the figure above into a plotly version for Shiny
-	gp <- ggplotly(f, height = 800)
+	gp <- ggplotly(f, height = height)
 
 	# move the labels to the left when using plotly (I suppose it doesn' use the theme values from ggplot)
 	# also rotate the labels to the proper orientation

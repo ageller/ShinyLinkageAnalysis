@@ -100,15 +100,9 @@ ShinyLinkageAnalysis <- function(){
 						hr(style = "border-top: 1px solid #000000;"),
 
 						h5("2. Select the subset of the data you want to analyze."),
-						selectInput(
-							"coupleID", "Dyad ID:",
-							Couple_IDs,
-							selected = "1"
-						),
-						selectInput(
-							"conversation", "Conversation:",
-							conversations,
-							selected = conversations[1]
+						fluidRow(
+							column(6, selectInput("coupleID", "Dyad ID:", Couple_IDs, selected = "1")),
+							column(6, selectInput("conversation", "Conversation:", conversations, selected = conversations[1])),
 						),
 
 						h5("3. Select the time window for the Pearson's correlation."),
@@ -117,7 +111,12 @@ ShinyLinkageAnalysis <- function(){
 							column(2, textInput("windowTextValue", "", value = 15)),
 						),
 
-						h5("4. Click the button below to update the plot."),
+						h5("4. Customize the plot."),
+						checkboxInput("showMeanIBI", "Show meanIBI panel", value = TRUE),
+						checkboxInput("showPC", "Show Pearson's coefficient panel", value = TRUE),
+						checkboxInput("showPP", "Show Pearson's p-value panel", value = TRUE),
+
+						h5("5. Click the button below to update the plot."),
 						actionButton("updatePlot", "Update Plot"),
 					)
 				)
@@ -126,7 +125,7 @@ ShinyLinkageAnalysis <- function(){
 					div(id = "uiStep3", style="padding-top:30px",
 						hr(style = "border-top: 1px solid #000000;"),
 
-						h5("5. Click the button below to analyze all dyads and conversations at the window specified above and download the data as a .csv file."),
+						h5("6. Click the button below to analyze all dyads and conversations at the window specified above and download the data as a .csv file."),
 						downloadButton("runAll", "Run All and Download"),
 					)
 				)
@@ -146,11 +145,15 @@ ShinyLinkageAnalysis <- function(){
 			usedf <- runPearsonsCouple(df, input$coupleID, input$conversation, as.numeric(input$windowTextValue))
 
 			# Generate the plot
-			f <- plotPearsonsCouple(usedf)
+			f <- plotPearsonsCouple(usedf, includeFacet = c(input$showMeanIBI, input$showPC, input$showPP))
+
+			height <- sum(c(460, 180, 180)*c(input$showMeanIBI, input$showPC, input$showPP))
+			topHeightFac <- 1.0
+			if (input$showMeanIBI) topHeightFac <- 1.5
 
 			# Render the plot using plotly (for interactivity)
 			output$PearsonsPlot <- renderPlotly(
-				plotlyPearsonsCouple(f, topHeightFac = 1.5)
+				plotlyPearsonsCouple(f, topHeightFac = topHeightFac, height = height)
 			)
 
 			show("mainPanel")
