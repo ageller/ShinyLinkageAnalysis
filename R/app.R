@@ -66,12 +66,12 @@ ShinyLinkageAnalysis <- function(){
 	)
 
 	# Define server logic
-	server <- function(input, output) {
+	server <- function(input, output, session) {
 		# increase the maximum file size
 		options(shiny.maxRequestSize = 30*1024^2) 
 
 
-
+		# after the file is loaded, show the rest of the UI
 		observe({
 			input$file1
 			isolate({
@@ -112,7 +112,10 @@ ShinyLinkageAnalysis <- function(){
 						),
 
 						h5("3. Select the time window for the Pearson's correlation."),
-						sliderInput("window", "Window (seconds) :", 0, 600, 15, step = 1),
+						fluidRow(
+							column(10, sliderInput("windowSliderValue", "Window (seconds) :", 0, 600, 15, step = 1)),
+							column(2, textInput("windowTextValue", "", value = 15)),
+						),
 
 						h5("4. Click the button below to update the plot."),
 						actionButton("updatePlot", "Update Plot"),
@@ -134,13 +137,13 @@ ShinyLinkageAnalysis <- function(){
 			})
 		})
 
-		# when button is clicked, select the data and update plots object
+		# when the update plot button is clicked, select the data and update plots object
 		observeEvent(input$updatePlot, {
 			
 			#hide("mainPanel")
 
 			# Run the correlation on the desired data
-			usedf <- runPearsonsCouple(df, input$coupleID, input$conversation, input$window)
+			usedf <- runPearsonsCouple(df, input$coupleID, input$conversation, as.numeric(input$windowTextValue))
 
 			# Generate the plot
 			f <- plotPearsonsCouple(usedf)
@@ -155,17 +158,32 @@ ShinyLinkageAnalysis <- function(){
 
 		})
 
+		# when the run all button is clicked, analyze the full file and download the results
 		output$runAll <- downloadHandler(
 			filename = function() {
 				paste0('linkageData-', Sys.Date(), '.csv')
 			},
 			content = function(con) {
-				outdf <- runPearsonsAll(df, input$window)
+				outdf <- runPearsonsAll(df, as.numeric(input$windowTextValue))
 				write.csv(outdf, con, row.names = FALSE)
 			}
 		)
 
 
+		# handlers to connect the slider and text entry for the window
+		# https://stackoverflow.com/questions/47822736/in-sync-sliderinput-and-textinput
+		observeEvent(input$windowTextValue,{
+			if(as.numeric(input$windowTextValue) != input$windowSliderValue & input$windowTextValue != "" &  input$windowSliderValue != ""){
+				updateSliderInput(session = session, inputId = "windowSliderValue", value = input$windowTextValue) 
+			} else {
+				if (input$windowTextValue == "") updateSliderInput(session = session, inputId = "windowSliderValue", value = 1) 
+			}
+		})
+		observeEvent(input$windowSliderValue,{
+			if(as.numeric(input$windowTextValue) != input$windowSliderValue & input$windowTextValue != "" &  input$windowSliderValue != ""){
+				updateTextInput(session = session, inputId = "windowTextValue", value = input$windowSliderValue) 
+			}
+		})		
 
 	}
 
