@@ -5,6 +5,7 @@ library(shinythemes)
 library(dplyr)
 library(ggplot2)
 library(grid)
+library(colourpicker)
 
 library(plotly)
 
@@ -115,6 +116,14 @@ ShinyLinkageAnalysis <- function(){
 						checkboxInput("showMeanIBI", "Show meanIBI panel", value = TRUE),
 						checkboxInput("showPC", "Show Pearson's coefficient panel", value = TRUE),
 						checkboxInput("showPP", "Show Pearson's p-value panel", value = TRUE),
+						checkboxInput("showMeanIBIpoints", "Include points in meanIBI panel", value = TRUE),
+						checkboxInput("showPCpoints", "Include points in Pearson's coefficient panel", value = TRUE),
+						checkboxInput("showPPpoints", "Include points in Pearson's p-value panel", value = TRUE),
+						checkboxInput("showPlimit", "Show Pearson's p-value limit line", value = TRUE),
+						colourInput("meanIBIcolor1","Color for Partner 1", value = "orange"),
+						colourInput("meanIBIcolor2","Color for Partner 2", value = "blue"),
+						colourInput("plimitColor","Color for p-value limit line", value = "red"),
+						textInput("plimitVal", "Pearson's p-value limit (for line in plot):", value = 0.05),
 
 						h5("5. Click the button below to update the plot."),
 						actionButton("updatePlot", "Update Plot"),
@@ -145,7 +154,7 @@ ShinyLinkageAnalysis <- function(){
 			usedf <- runPearsonsCouple(df, input$coupleID, input$conversation, as.numeric(input$windowTextValue))
 
 			# Generate the plot
-			f <- plotPearsonsCouple(usedf, includeFacet = c(input$showMeanIBI, input$showPC, input$showPP))
+			f <- plotPearsonsCouple(usedf, includeFacet = c(input$showMeanIBI, input$showPC, input$showPP), addPlimit = input$showPlimit, plimit = as.numeric(input$plimitVal), plotPoints = c(input$showMeanIBIpoints, input$showPCpoints, input$showPPpoints), colors = c(input$meanIBIcolor1, input$meanIBIcolor2, "black"), plimit_color = input$plimitColor)
 
 			height <- sum(c(460, 180, 180)*c(input$showMeanIBI, input$showPC, input$showPP))
 			topHeightFac <- 1.0
