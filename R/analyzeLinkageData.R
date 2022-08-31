@@ -27,6 +27,7 @@
 # This script is also used within the Shiny app
 
 
+
 readData <- function(filename){
 	# read the data and format the columns for use with the other functions in this file
 	df <- read.csv(filename)
@@ -252,6 +253,12 @@ plotlyPearsonsCouple <- function(f, topHeightFac = 1){
 			gp$x$layout$yaxis$domain <- c(size/topHeightFac + spacing,  1)
 			gp$x$layout$yaxis2$domain <- c(0, size/topHeightFac)
 		}
+
+		# move the annotations to the correct y positions
+		gp$x$layout$annotations[[2]]$y <- (gp$x$layout$yaxis$domain[[2]] - gp$x$layout$yaxis$domain[[1]])/2. + gp$x$layout$yaxis$domain[[1]]
+		gp$x$layout$annotations[[3]]$y <- (gp$x$layout$yaxis2$domain[[2]] - gp$x$layout$yaxis2$domain[[1]])/2. + gp$x$layout$yaxis2$domain[[1]]
+		if (!is.null(gp$x$layout$yaxis3)) gp$x$layout$annotations[[4]]$y <- (gp$x$layout$yaxis3$domain[[2]] - gp$x$layout$yaxis3$domain[[1]])/2. + gp$x$layout$yaxis3$domain[[1]]
+
 	}
 
 	return(gp)
