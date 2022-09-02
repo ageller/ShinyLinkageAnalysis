@@ -181,6 +181,8 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("Partner 
 		facet_grid(rows = vars(group), scales = "free_y", switch = "y",
 			labeller = as_labeller(c())
 			) +
+		scale_y_continuous(expand = c(0.01, 0.01)) + 
+		scale_x_continuous(expand = c(0.01, 0.01)) + 
 		ylab(NULL) + # remove the word "values"
 		#theme_bw() + # this looks great in ggplot, but when I resize in plotly the outside boxes don't change
 		theme(strip.background = element_blank(), # remove the background for the strip labels
