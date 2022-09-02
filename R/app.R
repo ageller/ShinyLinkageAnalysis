@@ -120,14 +120,18 @@ ShinyLinkageAnalysis <- function(){
 									checkboxInput("showMeanIBI", "Show meanIBI panel", value = TRUE),
 									checkboxInput("showPC", "Show Pearson's coefficient panel", value = TRUE),
 									checkboxInput("showPP", "Show Pearson's p-value panel", value = TRUE),
-									checkboxInput("showMeanIBIpoints", "Include points in meanIBI panel", value = TRUE),
+									checkboxInput("showMeanIBIpoints", "Include points in meanIBI panel", value = FALSE),
 									checkboxInput("showPCpoints", "Include points in Pearson's coefficient panel", value = TRUE),
 									checkboxInput("showPPpoints", "Include points in Pearson's p-value panel", value = TRUE),
 									checkboxInput("showPlimit", "Show Pearson's p-value limit line", value = TRUE),
-									colourInput("meanIBIcolor1","Color for Partner 1", value = "orange"),
-									colourInput("meanIBIcolor2","Color for Partner 2", value = "blue"),
-									colourInput("plimitColor","Color for p-value limit line", value = "red"),
-									textInput("plimitVal", "Pearson's p-value limit (for line in plot):", value = 0.05)
+									checkboxInput("showPrects", "Show rectangle for significant correlation regions", value = FALSE),
+									colourInput("partner1Color1","Color for Partner 1:", value = "#F8766D"),
+									colourInput("partner2Color2","Color for Partner 2:", value = "#00BFC4"),
+									colourInput("pearsonColor","Color for Pearson's plots:", value = "black"),
+									colourInput("plimitColor","Color for p-value limit line:", value = "#7CAE00"),
+									colourInput("prectsColor","Color for regions of significant correlation", value = "#C77CFF"),
+									textInput("prectsAlpha", "Opacity for regions of significant correlation:", value = 0.3),
+									textInput("plimitVal", "Pearson's p-value significance limit:", value = 0.05)
 								)
 							)
 						),
@@ -161,9 +165,11 @@ ShinyLinkageAnalysis <- function(){
 			usedf <- runPearsonsCouple(df, input$coupleID, input$conversation, as.numeric(input$windowTextValue))
 
 			# Generate the plot
-			f <- plotPearsonsCouple(usedf, includeFacet = c(input$showMeanIBI, input$showPC, input$showPP), addPlimit = input$showPlimit, plimit = as.numeric(input$plimitVal), plotPoints = c(input$showMeanIBIpoints, input$showPCpoints, input$showPPpoints), colors = c(input$meanIBIcolor1, input$meanIBIcolor2, "black"), plimit_color = input$plimitColor)
+
+			f <- plotPearsonsCouple(usedf, includeFacet = c(input$showMeanIBI, input$showPC, input$showPP), addPlimit = input$showPlimit, plimit = as.numeric(input$plimitVal), plotPoints = c(input$showMeanIBIpoints, input$showPCpoints, input$showPPpoints), colors = c("Partner 1" = input$partner1Color1, "Partner 2" = input$partner2Color2, "Pearson" = input$pearsonColor, "plimit" = input$plimitColor, "prects" = input$prectsColor), showPrects = input$showPrects, prectsAlpha = as.numeric(input$prectsAlpha))
 
 			height <- sum(c(460, 180, 180)*c(input$showMeanIBI, input$showPC, input$showPP))
+			height <- max(height, 400)
 			topHeightFac <- 1.0
 			if (input$showMeanIBI) topHeightFac <- 1.5
 

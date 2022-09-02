@@ -142,14 +142,12 @@ runPearsonsCouple <- function(df, coupleID, conversation, window, columnID = "me
 }
 
 
-plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("orange", "blue", "black"), includeFacet = c(TRUE, TRUE, TRUE), addPlimit = TRUE, plimit = 0.05, plimit_color = 'red', plotPoints = c(TRUE, TRUE, TRUE), pointSize = 0.7, topHeightFac = 1){
+plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("Partner 1" = "#F8766D", "Partner 2" = "#00BFC4", "Pearson" = "black", "plimit" = "#7CAE00", "prects" = "#C77CFF"), includeFacet = c(TRUE, TRUE, TRUE), addPlimit = TRUE, plimit = 0.05, prectsAlpha = 0.3, plotPoints = c(TRUE, TRUE, TRUE), pointSize = 0.7, topHeightFac = 1, showPrects = FALSE){
 	# this assumes output from the runPearsonsCouple function
 
 	# unique people
 	Ind_IDs <- unique(usedf$Ind_ID)
 
-	# give names to the colors so that I can have a proper legend
-	names(colors) <- c("Partner 1", "Partner 2", "Pearson")
 
 	# create a new dataframe that can be used with ggplot facets
 	fee <- usedf[, c("intervalStartTime", columnID, "Ind_ID")]
@@ -184,15 +182,19 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("orange",
 			labeller = as_labeller(c())
 			) +
 		ylab(NULL) + # remove the word "values"
-		theme(strip.background = element_blank(), # remove the background
+		#theme_bw() + # this looks great in ggplot, but when I resize in plotly the outside boxes don't change
+		theme(strip.background = element_blank(), # remove the background for the strip labels
 			legend.position = c(1.07, 0.98),
+			#panel.background = element_blank(), # remove the gray background
+			#panel.border = element_rect(color = "black", fill = NA, size = 1), # add a full border (doesn't work when resized in plotly!)
+			#axis.line = element_line(color = "black"), # add lines for the bottom and left side (won't add lines for all axis in facets)
 			strip.placement = "outside",  # put labels to the left of the axis text
 			plot.margin = margin(
 				t = 10,  # Top margin
-				r = 70,  # Right margin
+				r = 80,  # Right margin
 				b = 10,  # Bottom margin
 				l = 40)  # Left margin
-			)
+			) 
 
 	# if the user wants to add points, include only in the desired facets
 	if (any(plotPoints)) f <- f + geom_point(data = plotData %>% filter(group %in% groups[plotPoints]),
@@ -201,7 +203,7 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("orange",
 	# add a horizontal line to the p-value plot (beneath the other lines)
 	if (includeFacet[3] && addPlimit){
 		fline <- geom_hline(data = plotData %>% filter(group == "Pearson's p-value"),
-			aes(yintercept = plimit), color = plimit_color, linetype = 1)
+			aes(yintercept = plimit), color = colors['plimit'], linetype = 1)
 		f$layers <- c(fline, f$layers)
 	}
 
@@ -209,11 +211,39 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("orange",
 	if (!includeFacet[1]) f <- f + theme(legend.position = "none")
 
 	# adjust the top panel height
-	# NOTE: this does NOT work when converting to ggplotly (instead use the topHeightFac arg in plotlyPerasonsCouple)
+	# NOTE: this does NOT work when converting to ggplotly (instead use the topHeightFac arg in plotlyPearsonsCouple)
 	if (includeFacet[1] && topHeightFac != 1){
 		gt = ggplot_gtable(ggplot_build(f))
 		gt$heights[7] = topHeightFac*gt$heights[7]
 		f <- as.ggplot(gt)
+	}
+
+	# add rects for the significant regions 
+	# NOTE: ggplot's annotate function is perfect, but it won't work with ggplotly!  The main issue is that ggplotly won't allow Inf for the 
+	#   ymax and ymin.  If I change these y limits to non-Inf values, then I need to have diff limits for each facet, which annotate can't do.
+	#   So, I will create a bunch of rects for each facet...
+	if (showPrects){
+		significantT <- usedf$intervalStartTime[usedf$pearson_correlation_pvalue < plimit & !is.na(usedf$pearson_correlation_pvalue)]
+
+		# limit these to start and end values for drawing rects
+		# https://stackoverflow.com/questions/26603858/r-how-to-find-non-sequential-elements-in-an-array
+		rectStarts <- significantT[c(TRUE, diff(significantT) != 1)]
+		rectEnds <- significantT[c(diff(significantT) != 1, TRUE)]
+
+		# use ggplot's annotate feature.  (Does not work well with ggplotly, see above)
+		# for (i in 1:length(rectStarts)){
+		# 	annot <- annotate( "rect", xmin = rectStarts[i], xmax = rectEnds[i], ymin = -Inf, ymax = Inf, fill = colors['prects'], color = colors['prects'], alpha = prectsAlpha)
+		# }
+
+		# create rects 
+		for (i in 1:length(groups[includeFacet])){
+			# draw the rectangles (below the other layers)
+			ylims = layer_scales(f, i = i)$y$get_limits()
+			rectData <- data.frame("xmin" = rectStarts, "xmax" = rectEnds, "group" = groups[includeFacet][i], "ymin" = ylims[1], "ymax" = ylims[2])
+
+		    annot <- geom_rect(data = rectData, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax), alpha = prectsAlpha, fill = colors['prects'], inherit.aes = FALSE)
+			f$layers <- c(annot, f$layers)
+		}
 	}
 
 	return(f)
@@ -225,14 +255,14 @@ plotlyPearsonsCouple <- function(f, topHeightFac = 1, height = 800){
 
 	# move the labels to the left when using plotly (I suppose it doesn' use the theme values from ggplot)
 	# also rotate the labels to the proper orientation
-	gp$x$layout$annotations[[2]]$x <- -0.08
+	gp$x$layout$annotations[[2]]$x <- -0.09
 	gp$x$layout$annotations[[2]]$textangle <- -90
 	if (length(gp$x$layout$annotations) >= 3){
-		gp$x$layout$annotations[[3]]$x <- -0.08
+		gp$x$layout$annotations[[3]]$x <- -0.09
 		gp$x$layout$annotations[[3]]$textangle <- -90
 	}
 	if (length(gp$x$layout$annotations) >= 4){
-		gp$x$layout$annotations[[4]]$x <- -0.08
+		gp$x$layout$annotations[[4]]$x <- -0.09
 		gp$x$layout$annotations[[4]]$textangle <- -90
 	}
 
