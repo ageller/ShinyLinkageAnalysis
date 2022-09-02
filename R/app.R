@@ -1,6 +1,7 @@
 library(shiny)
 library(shinyjs)
 library(shinythemes)
+library(shinyBS)
 
 library(dplyr)
 library(ggplot2)
@@ -113,17 +114,23 @@ ShinyLinkageAnalysis <- function(){
 						),
 
 						h5("4. Customize the plot."),
-						checkboxInput("showMeanIBI", "Show meanIBI panel", value = TRUE),
-						checkboxInput("showPC", "Show Pearson's coefficient panel", value = TRUE),
-						checkboxInput("showPP", "Show Pearson's p-value panel", value = TRUE),
-						checkboxInput("showMeanIBIpoints", "Include points in meanIBI panel", value = TRUE),
-						checkboxInput("showPCpoints", "Include points in Pearson's coefficient panel", value = TRUE),
-						checkboxInput("showPPpoints", "Include points in Pearson's p-value panel", value = TRUE),
-						checkboxInput("showPlimit", "Show Pearson's p-value limit line", value = TRUE),
-						colourInput("meanIBIcolor1","Color for Partner 1", value = "orange"),
-						colourInput("meanIBIcolor2","Color for Partner 2", value = "blue"),
-						colourInput("plimitColor","Color for p-value limit line", value = "red"),
-						textInput("plimitVal", "Pearson's p-value limit (for line in plot):", value = 0.05),
+						bsCollapse(id = "collapsableCustomize",
+							bsCollapsePanel("Click here to show/hide options", "", style = "default",
+								div(
+									checkboxInput("showMeanIBI", "Show meanIBI panel", value = TRUE),
+									checkboxInput("showPC", "Show Pearson's coefficient panel", value = TRUE),
+									checkboxInput("showPP", "Show Pearson's p-value panel", value = TRUE),
+									checkboxInput("showMeanIBIpoints", "Include points in meanIBI panel", value = TRUE),
+									checkboxInput("showPCpoints", "Include points in Pearson's coefficient panel", value = TRUE),
+									checkboxInput("showPPpoints", "Include points in Pearson's p-value panel", value = TRUE),
+									checkboxInput("showPlimit", "Show Pearson's p-value limit line", value = TRUE),
+									colourInput("meanIBIcolor1","Color for Partner 1", value = "orange"),
+									colourInput("meanIBIcolor2","Color for Partner 2", value = "blue"),
+									colourInput("plimitColor","Color for p-value limit line", value = "red"),
+									textInput("plimitVal", "Pearson's p-value limit (for line in plot):", value = 0.05)
+								)
+							)
+						),
 
 						h5("5. Click the button below to update the plot."),
 						actionButton("updatePlot", "Update Plot"),
