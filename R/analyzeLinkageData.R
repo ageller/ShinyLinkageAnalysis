@@ -184,7 +184,7 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("Partner 
 		scale_y_continuous(expand = c(0.01, 0.01)) + 
 		scale_x_continuous(expand = c(0.01, 0.01)) + 
 		ylab(NULL) + # remove the word "values"
-		#theme_bw() + # this looks great in ggplot, but when I resize in plotly the outside boxes don't change
+		theme_bw() + # this looks great in ggplot, but when I resize in plotly the outside boxes don't change
 		theme(strip.background = element_blank(), # remove the background for the strip labels
 			legend.position = c(1.07, 0.98),
 			#panel.background = element_blank(), # remove the gray background
@@ -278,12 +278,41 @@ plotlyPearsonsCouple <- function(f, topHeightFac = 1, height = 800){
 		spacing <- as.numeric(gp$x$layout$yaxis$domain[[1]] - gp$x$layout$yaxis2$domain[[2]])
 		size <- as.numeric(1. - gp$x$layout$yaxis$domain[[1]])
 		if (!is.null(gp$x$layout$yaxis3)){
+			# data
 			gp$x$layout$yaxis$domain <- c(2.*size/topHeightFac + 2*spacing, 1)
 			gp$x$layout$yaxis2$domain <- c(size/topHeightFac + spacing,  2.*size/topHeightFac + spacing)
 			gp$x$layout$yaxis3$domain <- c(0, size/topHeightFac)
+
+			# border from theme_bw (apparently there are two rects for each axis)
+			gp$x$layout$shapes[[1]]$y0 <- 2.*size/topHeightFac + 2*spacing
+			gp$x$layout$shapes[[1]]$y1 <- 1.
+			gp$x$layout$shapes[[2]]$y0 <- gp$x$layout$shapes[[1]]$y0 
+			gp$x$layout$shapes[[2]]$y1 <- gp$x$layout$shapes[[1]]$y1
+
+			gp$x$layout$shapes[[3]]$y0 <- size/topHeightFac + spacing
+			gp$x$layout$shapes[[3]]$y1 <- 2.*size/topHeightFac + spacing
+			gp$x$layout$shapes[[4]]$y0 <- gp$x$layout$shapes[[3]]$y0
+			gp$x$layout$shapes[[4]]$y1 <- gp$x$layout$shapes[[3]]$y1
+
+			gp$x$layout$shapes[[5]]$y0 <- 0
+			gp$x$layout$shapes[[5]]$y1 <- size/topHeightFac
+			gp$x$layout$shapes[[6]]$y0 <- gp$x$layout$shapes[[5]]$y0
+			gp$x$layout$shapes[[6]]$y1 <- gp$x$layout$shapes[[5]]$y1
 		} else {
+			# data
 			gp$x$layout$yaxis$domain <- c(size/topHeightFac + spacing,  1)
 			gp$x$layout$yaxis2$domain <- c(0, size/topHeightFac)
+
+			#border from theme_bw (apparently there are two rects for each axis)
+			gp$x$layout$shapes[[1]]$y0 <- size/topHeightFac + spacing
+			gp$x$layout$shapes[[1]]$y1 <- 1.
+			gp$x$layout$shapes[[2]]$y0 <- gp$x$layout$shapes[[1]]$y0 
+			gp$x$layout$shapes[[2]]$y1 <- gp$x$layout$shapes[[1]]$y1
+
+			gp$x$layout$shapes[[3]]$y0 <- size/topHeightFac
+			gp$x$layout$shapes[[3]]$y1 <- 0.
+			gp$x$layout$shapes[[4]]$y0 <- gp$x$layout$shapes[[3]]$y0
+			gp$x$layout$shapes[[4]]$y1 <- gp$x$layout$shapes[[3]]$y1
 		}
 
 		# move the annotations to the correct y positions
