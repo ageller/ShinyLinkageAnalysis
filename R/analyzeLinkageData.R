@@ -175,7 +175,7 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("Partner 
 
 	# generate the plot
 	f <- ggplot(data = plotData, aes(x = .data[["Time (s)"]], y = value, group = group, color = ID)) +
-		geom_line(aes(group = ID)) + 
+		geom_line() + 
 		scale_color_manual(values = colors, name = "", breaks = c('Partner 1', 'Partner 2')) + 
 		facet_grid(rows = vars(group), scales = "free_y", switch = "y",
 			labeller = as_labeller(c())
