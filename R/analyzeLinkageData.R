@@ -31,8 +31,7 @@
 readData <- function(filename){
 	# read the data and format the columns for use with the other functions in this file
 	df <- read.csv(filename)
-	df$id = as.factor(df$id)
-	df$Ind_ID = as.factor(df$Ind_ID)
+	df$Ind_ID = as.factor(df$Ind_ID) 
 	df$Couple_ID = as.factor(df$Couple_ID)
 	df$conversation = as.factor(df$conversation)
 
@@ -175,9 +174,9 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("Partner 
 	plotData <- plotData %>% filter(group %in% groups[includeFacet])
 
 	# generate the plot
-	f <- ggplot(data=plotData, aes(x=.data[["Time (s)"]], y=value, group=group, color=ID)) +
-		geom_line(aes(group=ID)) + 
-		scale_color_manual(values=colors, name = "", breaks = c('Partner 1', 'Partner 2')) + 
+	f <- ggplot(data = plotData, aes(x = .data[["Time (s)"]], y = value, group = group, color = ID)) +
+		geom_line(aes(group = ID)) + 
+		scale_color_manual(values = colors, name = "", breaks = c('Partner 1', 'Partner 2')) + 
 		facet_grid(rows = vars(group), scales = "free_y", switch = "y",
 			labeller = as_labeller(c())
 			) +
@@ -200,7 +199,7 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("Partner 
 
 	# if the user wants to add points, include only in the desired facets
 	if (any(plotPoints)) f <- f + geom_point(data = plotData %>% filter(group %in% groups[plotPoints]),
-			aes(x=.data[["Time (s)"]], y=value, group=group, color=ID), size=pointSize)
+			aes(x = .data[["Time (s)"]], y = value, group = group, color = ID), size = pointSize)
 
 	# add a horizontal line to the p-value plot (beneath the other lines)
 	if (includeFacet[3] && addPlimit){
@@ -385,25 +384,41 @@ runPearsonsAllLoop <- function(df, outdf, Couple_IDs, conversations, window, col
 
 	}
 
-	# add on the "in-phase" and "anti-phase" columns
+	# add on the absolute value, "in-phase" and "anti-phase" columns
+	absolute_value <- abs(outdf$pearson_correlation_coefficient)
 	in_phase <- outdf$pearson_correlation_coefficient
 	in_phase[in_phase < 0] <- 0 
 	anti_phase <- outdf$pearson_correlation_coefficient
 	anti_phase[anti_phase > 0] <- 0 
+	outdf$pearson_correlation_coefficient_absolute_value <- absolute_value
 	outdf$pearson_correlation_coefficient_in_phase <- in_phase
-	outdf$pearson_correlation_coefficient_anti_phase <- anti_phase
+	outdf$pearson_correlation_coefficient_anti_phase <- abs(anti_phase)
 	
 	return(outdf)
 
 }
 
+renameColumns <- function(df){
+	names(df)[names(df) == 'pearson_correlation_pvalue'] <- 'overall_linkage_pearson_correlation_pvalue'
+	names(df)[names(df) == 'pearson_correlation_coefficient'] <- 'overall_linkage_pearson_correlation'
+	names(df)[names(df) == 'pearson_correlation_coefficient_absolute_value'] <- 'absolute_linkage_pearson_correlation'
+	names(df)[names(df) == 'pearson_correlation_coefficient_in_phase'] <- 'inphase_linkage_pearson_correlation'
+	names(df)[names(df) == 'pearson_correlation_coefficient_anti_phase'] <- 'antiphase_linkage_pearson_correlation'
+
+	return(df)
+}
+
 exportToFile <- function(df, filename){
-	write.csv(df,filename, row.names = FALSE)
+	# rename columns
+	outdf <- renameColumns(df)
+
+	# write to file
+	write.csv(outdf,filename, row.names = FALSE)
 }
 
 
 ###########################
-# previous plotting code, with 4 panels
+# previous plotting code, with 4 panels (not used in Shiny app)
 ###########################
 
 plotPearsonsCoupleOrg <- function(usedf, columnID = "meanIBI"){

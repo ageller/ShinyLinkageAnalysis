@@ -188,9 +188,10 @@ ShinyLinkageAnalysis <- function(){
 			filename = function() {
 				paste0('linkageData-', Sys.Date(), '.csv')
 			},
-			content = function(con) {
+			content = function(fname) {
 				outdf <- runPearsonsAll(df, as.numeric(input$windowTextValue))
-				write.csv(outdf, con, row.names = FALSE)
+				outdf <- renameColumns(outdf)
+				write.csv(outdf, fname, row.names = FALSE)
 			}
 		)
 
