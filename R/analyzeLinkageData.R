@@ -179,7 +179,7 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("Partner 
 		scale_color_manual(values = colors, name = "", breaks = c('Partner 1', 'Partner 2')) + 
 		facet_grid(rows = vars(group), scales = "free_y", switch = "y",
 			labeller = as_labeller(c())
-			) +
+		) +
 		scale_y_continuous(expand = c(0.01, 0.01)) + 
 		scale_x_continuous(expand = c(0.01, 0.01)) + 
 		ylab(NULL) + # remove the word "values"
@@ -195,7 +195,7 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("Partner 
 				r = 80,  # Right margin
 				b = 10,  # Bottom margin
 				l = 40)  # Left margin
-			) 
+		) 
 
 	# if the user wants to add points, include only in the desired facets
 	if (any(plotPoints)) f <- f + geom_point(data = plotData %>% filter(group %in% groups[plotPoints]),
@@ -250,7 +250,7 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("Partner 
 	return(f)
 }
 
-plotlyPearsonsCouple <- function(f, topHeightFac = 1, height = 800){
+plotlyPearsonsCouple <- function(f, columnID = "meanIBI", topHeightFac = 1, height = 800,  columnYlimit = c(NA, NA)){
 	# convert the figure above into a plotly version for Shiny
 	gp <- ggplotly(f, height = height)
 
@@ -267,12 +267,18 @@ plotlyPearsonsCouple <- function(f, topHeightFac = 1, height = 800){
 		gp$x$layout$annotations[[4]]$textangle <- -90
 	}
 
+	# set consistent font sizes and colors for annotations
+	for (i in 2:length(gp$x$layout$annotations)){
+		gp$x$layout$annotations[[i]]$font$size <- gp$x$layout$annotations[[1]]$font$size
+		gp$x$layout$annotations[[i]]$font$color <- gp$x$layout$annotations[[1]]$font$color
+	}
+
 	# remove the "-1" from the legend for Pearson(again!)
 	for (i in 1:length(gp$x$data)){
 		if (gp$x$data[[i]]$name == "Pearson") gp$x$data[[i]]$showlegend <- FALSE  
 	}
 
-	# adjust the sizing
+	# adjust the size of each panel Pearson's plots are smaller in the y dimension
 	if (topHeightFac != 1 && !is.null(gp$x$layout$yaxis2)){
 		spacing <- as.numeric(gp$x$layout$yaxis$domain[[1]] - gp$x$layout$yaxis2$domain[[2]])
 		size <- as.numeric(1. - gp$x$layout$yaxis$domain[[1]])
@@ -319,6 +325,13 @@ plotlyPearsonsCouple <- function(f, topHeightFac = 1, height = 800){
 		gp$x$layout$annotations[[3]]$y <- (gp$x$layout$yaxis2$domain[[2]] - gp$x$layout$yaxis2$domain[[1]])/2. + gp$x$layout$yaxis2$domain[[1]]
 		if (!is.null(gp$x$layout$yaxis3)) gp$x$layout$annotations[[4]]$y <- (gp$x$layout$yaxis3$domain[[2]] - gp$x$layout$yaxis3$domain[[1]])/2. + gp$x$layout$yaxis3$domain[[1]]
 
+	}
+
+
+	# adjust the y axis limits for the top panel (if it is not a Pearson's plot)
+	if (!is.null(gp$x$layout$yaxis) && gp$x$layout$annotations[[2]]$text == columnID){
+		if (!is.na(columnYlimit[1])) gp$x$layout$yaxis$range[1] = columnYlimit[1]
+		if (!is.na(columnYlimit[2])) gp$x$layout$yaxis$range[2] = columnYlimit[2]
 	}
 
 	return(gp)

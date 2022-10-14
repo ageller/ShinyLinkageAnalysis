@@ -131,7 +131,9 @@ ShinyLinkageAnalysis <- function(){
 									colourInput("plimitColor","Color for p-value limit line:", value = "#7CAE00"),
 									colourInput("prectsColor","Color for regions of significant correlation", value = "#C77CFF"),
 									textInput("prectsAlpha", "Opacity for regions of significant correlation:", value = 0.3),
-									textInput("plimitVal", "Pearson's p-value significance limit:", value = 0.05)
+									textInput("plimitVal", "Pearson's p-value significance limit:", value = 0.05),
+									textInput("maxYlimit", "Maximum value for the y axix on the meanIBI panel (leave blank for autoscaling)", value = NA),
+									textInput("minYlimit", "Minimum value for the y axix on the meanIBI panel (leave blank for autoscaling)", value = NA)
 								)
 							)
 						),
@@ -166,7 +168,7 @@ ShinyLinkageAnalysis <- function(){
 
 			# Generate the plot
 
-			f <- plotPearsonsCouple(usedf, includeFacet = c(input$showMeanIBI, input$showPC, input$showPP), addPlimit = input$showPlimit, plimit = as.numeric(input$plimitVal), plotPoints = c(input$showMeanIBIpoints, input$showPCpoints, input$showPPpoints), colors = c("Partner 1" = input$partner1Color1, "Partner 2" = input$partner2Color2, "Pearson" = input$pearsonColor, "plimit" = input$plimitColor, "prects" = input$prectsColor), showPrects = input$showPrects, prectsAlpha = as.numeric(input$prectsAlpha))
+			f <- plotPearsonsCouple(usedf, includeFacet = c(input$showMeanIBI, input$showPC, input$showPP), addPlimit = input$showPlimit, plimit = as.numeric(input$plimitVal), plotPoints = c(input$showMeanIBIpoints, input$showPCpoints, input$showPPpoints), colors = c("Partner 1" = input$partner1Color1, "Partner 2" = input$partner2Color2, "Pearson" = input$pearsonColor, "plimit" = input$plimitColor, "prects" = input$prectsColor), showPrects = input$showPrects, prectsAlpha = as.numeric(input$prectsAlpha) )
 
 			height <- sum(c(460, 180, 180)*c(input$showMeanIBI, input$showPC, input$showPP))
 			height <- max(height, 400)
@@ -175,7 +177,7 @@ ShinyLinkageAnalysis <- function(){
 
 			# Render the plot using plotly (for interactivity)
 			output$PearsonsPlot <- renderPlotly(
-				plotlyPearsonsCouple(f, topHeightFac = topHeightFac, height = height)
+				plotlyPearsonsCouple(f, topHeightFac = topHeightFac, height = height,  columnYlimit = c(as.numeric(input$minYlimit), as.numeric(input$maxYlimit)) )
 			)
 
 			show("mainPanel")
