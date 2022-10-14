@@ -40,14 +40,26 @@ You can also use the same functions outside the Shiny app (for instance within R
 ```
 
 ```
+# define the columns that will contain the data to be analyzed
+> columnNames = data.frame(list(
+	individualID = "Ind_ID", 
+	coupleID = "Couple_ID",
+	task = "conversation", 
+	independentVar = "intervalStartTime", 
+	dependentVar = "meanIBI"
+))
+```
+
+```
 # read in the data (in inputfile.csv) and format it correctly
 > df <- ShinyLinkageAnalysis::readData("inputfile.csv") 
+> df <- ShinyLinkageAnalysis::processData(df, columnNames)
 ```
 
 ```
 # get the Pearson's correlation statistics for dyad 1 using the "Negative" conversation 
 # with a window of 15 seconds
-> usedf <- ShinyLinkageAnalysis::runPearsonsCouple(df, 1, "Negative", 15) 
+> usedf <- ShinyLinkageAnalysis::runPearsonsCouple(df, 1, "Negative", 15, columnNames) 
 ```
 
 ```
@@ -55,8 +67,8 @@ You can also use the same functions outside the Shiny app (for instance within R
 # Note: there are may arguments that can be supplied to customize the plot.  
 #    These are used within the Shiny app, but are also available here.  
 #    If you would like to use them directly from the R command line and need assistance, 
-#    please contact me for details. 
-> ShinyLinkageAnalysis::plotPearsonsCouple(usedf) 
+#    please use the "issues" in GitHub to request additional documentation. 
+> ShinyLinkageAnalysis::plotPearsonsCouple(usedf, columnNames) 
 ```
 
 ```
@@ -64,7 +76,7 @@ You can also use the same functions outside the Shiny app (for instance within R
 # with a window of 15 seconds.
 # Note: this will provide a reformatted file; if the user desires to keep the current formatting, 
 #    they can supply the arg : format = "original".
-> outdf <- ShinyLinkageAnalysis::runPearsonsAll(df, 15)
+> outdf <- ShinyLinkageAnalysis::runPearsonsAll(df, 15, columnNames)
 ```
 
 ```

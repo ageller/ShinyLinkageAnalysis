@@ -5,21 +5,28 @@
 # First, load in the R script
 # > source("src/R/analyzeLinkageData.R")
 #
-# read in the data (in inputfile.csv) and format it correctly
-# > df <- readData("inputfile.csv") 
+# define the column names for the analysis 
+# > columnNames = data.frame(list(individualID = "Ind_ID", 
+# 							  coupleID = "Couple_ID",
+# 							  task = "conversation", 
+# 							  independentVar = "intervalStartTime", 
+# 							  dependentVar = "meanIBI"))
 #
-# get the Pearson's correlation statistics for dyad 1 using the "Negative" conversation 
+# read in the data (in inputfile.csv) and format it correctly
+# > df <- processData(readData("inputfile.csv") )
+#
+# get the Pearson's correlation statistics for dyad 1 using the "Negative" task 
 # with a window of 15 seconds
-# > usedf <- runPearsonsCouple(df, 1, "Negative", 15) 
+# > usedf <- runPearsonsCouple(df, 1, "Negative", 15, columnNames) 
 #
 # generate a figure for this particular subset of the data 
-# > plotPearsonsCouple(usedf) 
+# > plotPearsonsCouple(usedf, columnNames) 
 #
-# calculate the Pearson's statistics for every dyad and conversation in the data set 
+# calculate the Pearson's statistics for every dyad and task in the data set 
 # with a window of 15 seconds
 # Note: this will provide a reformatted file; if the user desires to keep the current formatting, 
 #   they can supply the arg ```format = "original" ```.
-# > outdf <- runPearsonsAll(df, 15)
+# > outdf <- runPearsonsAll(df, 15, columnNames)
 #
 # write the output dataframe to a csv file named outputfile.csv
 # > exportToFile(outdf, "outputfile.csv") 
@@ -29,86 +36,96 @@
 
 
 readData <- function(filename){
-	# read the data and format the columns for use with the other functions in this file
+	# read the data 
 	df <- read.csv(filename)
-	df$Ind_ID = as.factor(df$Ind_ID) 
-	df$Couple_ID = as.factor(df$Couple_ID)
-	df$conversation = as.factor(df$conversation)
 
-	# remove any "couples" that only have a single Ind_ID value
+	return(df)
+}
+
+processData <- function(df,  columnNames = data.frame(list(individualID = "Ind_ID", coupleID = "Couple_ID", task = "conversation", independentVar = "intervalStartTime", dependentVar = "meanIBI")) ) {
+
+	# subset
+	# df <- df[c(columnNames$individualID, columnNames$coupleID, columnNames$task, columnNames$independentVar, columnNames$dependentVar)]
+
+	# format the columns for use with the other functions in this file
+	df[columnNames$individualID] = as.factor(df[[columnNames$individualID]]) 
+	df[columnNames$coupleID] = as.factor(df[[columnNames$coupleID]])
+	df[columnNames$task] = as.factor(df[[columnNames$task]])
+
+	# remove any "couples" that only have a single individualID value
 	bad <- c()
-	for (CoupleID in unique(df$Couple_ID)){
-		usedf <- df[df$Couple_ID == CoupleID,]
-		if (length(unique(usedf$Ind_ID)) != 2){
+	for (CoupleID in unique(df[[columnNames$coupleID]])) {
+		usedf <- df[columnNames$coupleID == CoupleID,]
+		if (length(unique(df[[columnNames$individualID]])) != 2) {
 			bad <- append(bad, CoupleID)
 		}
 	}
 
+	return(df[! df[columnNames$coupleID] %in% bad, ])
 
-	return(df[! df$Couple_ID %in% bad, ])
 }
 
-runPearsonsCouple <- function(df, coupleID, conversation, window, columnID = "meanIBI", format = "original"){
-	# select the dyad and the conversation
-	usedf <- df[df$Couple_ID == coupleID & df$conversation == conversation,]
+runPearsonsCouple <- function(df, coupleID, task, window, columnNames = data.frame(list(individualID = "Ind_ID", coupleID = "Couple_ID", task = "conversation", independentVar = "intervalStartTime", dependentVar = "meanIBI")), format = "original"){
+	# select the dyad and the task
+	usedf <- df[df[columnNames$coupleID] == coupleID & df[columnNames$task] == task,]
 
 	# unique people
-	Ind_IDs <- unique(usedf$Ind_ID)
+	Ind_IDs <- unique(usedf[[columnNames$individualID]])
 
 	# the offset is half the windows
 	offset <- as.integer((window - 1)/2)
 
 	# create empty vectors to store the correlation coefficients and pvalues
-	nMeasurements = nrow(usedf[usedf$Ind_ID == Ind_IDs[1],])
+	nMeasurements = nrow(usedf[usedf[[columnNames$individualID]] == Ind_IDs[1],])
 	pcor <- vector("list", nMeasurements)
 	ppcor <- vector("list", nMeasurements)
 
 	# create a reformatted output file to pass as well
-	usedf2 <- usedf[usedf$Ind_ID == Ind_IDs[1],][c('Couple_ID', 'conversation','intervalStartTime')]
+	usedf2 <- usedf[usedf[[columnNames$individualID]] == Ind_IDs[1],][c(columnNames$coupleID, columnNames$task,columnNames$independentVar)]
 	usedf2$Ind_ID_1 <- Ind_IDs[1]
 	usedf2$Ind_ID_2 <- Ind_IDs[2]
-	usedf2[[paste0(columnID,'_1')]] <- usedf[usedf$Ind_ID == Ind_IDs[1],][[columnID]]
+	usedf2[[paste0(columnNames$dependentVar,'_1')]] <- usedf[usedf[[columnNames$individualID]] == Ind_IDs[1],][[columnNames$dependentVar]]
 	pcor2 <- vector("list", nMeasurements)
 	ppcor2 <- vector("list", nMeasurements)
 	column_2 <- vector("list", nMeasurements)
 
-	# start time
-	currentTime = min(usedf$intervalStartTime)
+	# start value for the independent variable
+	currentXvalue = min(usedf[columnNames$independentVar])
 
-	# loop through the data,  select the appropriate window (time +/- offset) around that time, 
+	# loop through the data,  select the appropriate window (value +/- offset) around that value, 
 	# and calculate the Pearson's correlation coefficient
-	# I suppose for this data set, I could probably just go through by index rather than time, but that seems dangerous
-	while(currentTime <= max(usedf$intervalStartTime)){
+	# I suppose for this data set, I could probably just go through by index rather than value, but that seems dangerous
+	while(currentXvalue <= max(usedf[columnNames$independentVar])){
 		
 		# find the index in the array
 		# this will return two values, one for the first person and one for the second person
-		i <- which(usedf$intervalStartTime == currentTime)
+		i <- which(usedf[[columnNames$independentVar]] == currentXvalue)
 
 		# this only has the first person
-		i2 <- which(usedf2$intervalStartTime == currentTime)
+		i2 <- which(usedf2[[columnNames$independentVar]] == currentXvalue)
 
-		column_2[i2] <- usedf[[columnID]][i[2]]
+		column_2[i2] <- usedf[[columnNames$dependentVar]][i[2]]
 
 		havePcor <- FALSE
 		
-		# if the time window is fully available in the data then try to calculate the Pearson's correlation
-		if (currentTime - offset >= min(usedf$intervalStartTime) & currentTime + offset <= max(usedf$intervalStartTime)){
+		# if the value window is fully available in the data then try to calculate the Pearson's correlation
+		if (currentXvalue - offset >= min(usedf[columnNames$independentVar]) & currentXvalue + offset <= max(usedf[columnNames$independentVar])){
 			
-			# select the rows in the data frame within the time window for the first person
-			rows0 <- usedf[usedf$Ind_ID == Ind_IDs[1] & 
-						   usedf$intervalStartTime >= currentTime - offset & 
-						   usedf$intervalStartTime <= currentTime + offset, ]
+			# select the rows in the data frame within the value window for the first person
+			rows0 <- usedf[usedf[[columnNames$individualID]] == Ind_IDs[1] & 
+						   usedf[[columnNames$independentVar]] >= currentXvalue - offset & 
+						   usedf[[columnNames$independentVar]] <= currentXvalue + offset, ]
 			
-			# select the rows in the data frame within the time window for the second person
-			rows1 <- usedf[usedf$Ind_ID == Ind_IDs[2] & 
-						   usedf$intervalStartTime >= currentTime - offset & 
-						   usedf$intervalStartTime <= currentTime + offset, ]
+			# select the rows in the data frame within the value window for the second person
+			rows1 <- usedf[usedf[[columnNames$individualID]] == Ind_IDs[2] & 
+						   usedf[[columnNames$independentVar]] >= currentXvalue - offset & 
+						   usedf[[columnNames$independentVar]] <= currentXvalue + offset, ]
 			
 
 			# if each of these subsets of data are the same length, then calculate the Pearson's correlation
-			if (nrow(rows0) == nrow(rows1) & sum(!is.na(rows0[[columnID]])) > 2 & sum(!is.na(rows1[[columnID]])) > 2){
+			if (nrow(rows0) == nrow(rows1) & sum(!is.na(rows0[[columnNames$dependentVar]])) > 2 & sum(!is.na(rows1[[columnNames$dependentVar]])) > 2){
 				havePcor <- TRUE
-				foo <- cor.test(rows0[[columnID]], rows1[[columnID]], method = "pearson")
+				foo <- cor.test(rows0[[columnNames$dependentVar]], rows1[[columnNames$dependentVar]], method = "pearson")
 				pcor[i] <- foo$estimate
 				ppcor[i] <- foo$p.value
 				pcor2[i2] <- foo$estimate
@@ -125,14 +142,14 @@ runPearsonsCouple <- function(df, coupleID, conversation, window, columnID = "me
 		}
 			
 
-		# increment the time by one second
-		currentTime <- currentTime + 1
+		# increment the value by one 
+		currentXvalue <- currentXvalue + 1
 	}
 
 	usedf$pearson_correlation_pvalue <- as.double(ppcor)
 	usedf$pearson_correlation_coefficient <- as.double(pcor)
 
-	usedf2[[paste0(columnID,'_2')]] <- as.double(column_2)
+	usedf2[[paste0(columnNames$dependentVar,'_2')]] <- as.double(column_2)
 	usedf2$pearson_correlation_pvalue <- as.double(ppcor2)
 	usedf2$pearson_correlation_coefficient <- as.double(pcor2)
 
@@ -141,26 +158,26 @@ runPearsonsCouple <- function(df, coupleID, conversation, window, columnID = "me
 }
 
 
-plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("Partner 1" = "#F8766D", "Partner 2" = "#00BFC4", "Pearson" = "black", "plimit" = "#7CAE00", "prects" = "#C77CFF"), includeFacet = c(TRUE, TRUE, TRUE), addPlimit = TRUE, plimit = 0.05, prectsAlpha = 0.3, plotPoints = c(TRUE, TRUE, TRUE), pointSize = 0.7, topHeightFac = 1, showPrects = FALSE){
+plotPearsonsCouple <- function(usedf, columnNames = data.frame(list(individualID = "Ind_ID", coupleID = "Couple_ID", task = "conversation", independentVar = "intervalStartTime", dependentVar = "meanIBI")), colors = c("Partner 1" = "#F8766D", "Partner 2" = "#00BFC4", "Pearson" = "black", "plimit" = "#7CAE00", "prects" = "#C77CFF"), includeFacet = c(TRUE, TRUE, TRUE), addPlimit = TRUE, plimit = 0.05, prectsAlpha = 0.3, plotPoints = c(TRUE, TRUE, TRUE), pointSize = 0.7, topHeightFac = 1, showPrects = FALSE){
 	# this assumes output from the runPearsonsCouple function
 
 	# unique people
-	Ind_IDs <- unique(usedf$Ind_ID)
+	Ind_IDs <- unique(usedf[[columnNames$individualID]])
 
 
 	# create a new dataframe that can be used with ggplot facets
-	fee <- usedf[, c("intervalStartTime", columnID, "Ind_ID")]
-	fee$Ind_ID <- as.numeric(as.character(fee$Ind_ID))
+	fee <- usedf[, c(columnNames$independentVar, columnNames$dependentVar, columnNames$individualID)]
+	fee[columnNames$individualID] <- as.numeric(as.character(fee[[columnNames$individualID]]))
 	minID = min(as.numeric(as.character(Ind_IDs)))
 	maxID = max(as.numeric(as.character(Ind_IDs)))
-	fee$Ind_ID[fee$Ind_ID == minID] <- "Partner 1"
-	fee$Ind_ID[fee$Ind_ID == maxID] <- "Partner 2"
-	fee$group <- columnID
-	foo <- select(usedf[usedf$Ind_ID == Ind_IDs[1],], intervalStartTime, pearson_correlation_coefficient)
-	foo$Ind_ID <- "Pearson"
+	fee[columnNames$individualID][fee[columnNames$individualID] == minID] <- "Partner 1"
+	fee[columnNames$individualID][fee[columnNames$individualID] == maxID] <- "Partner 2"
+	fee$group <- columnNames$dependentVar
+	foo <- select(usedf[usedf[[columnNames$individualID]] == Ind_IDs[1],], columnNames$independentVar, pearson_correlation_coefficient)
+	foo[columnNames$individualID] <- "Pearson"
 	foo$group <- "Pearson's coefficient"
-	bar <- select(usedf[usedf$Ind_ID == Ind_IDs[1],], intervalStartTime, pearson_correlation_pvalue)
-	bar$Ind_ID <- "Pearson"
+	bar <- select(usedf[usedf[[columnNames$individualID]] == Ind_IDs[1],], columnNames$independentVar, pearson_correlation_pvalue)
+	bar[columnNames$individualID] <- "Pearson"
 	bar$group <- "Pearson's p-value"
 
 	names(fee) <- c("Time (s)", "value", "ID", "group")
@@ -202,7 +219,7 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("Partner 
 			aes(x = .data[["Time (s)"]], y = value, group = group, color = ID), size = pointSize)
 
 	# add a horizontal line to the p-value plot (beneath the other lines)
-	if (includeFacet[3] && addPlimit){
+	if (includeFacet[3] & addPlimit){
 		fline <- geom_hline(data = plotData %>% filter(group == "Pearson's p-value"),
 			aes(yintercept = plimit), color = colors['plimit'], linetype = 1)
 		f$layers <- c(fline, f$layers)
@@ -213,7 +230,7 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("Partner 
 
 	# adjust the top panel height
 	# NOTE: this does NOT work when converting to ggplotly (instead use the topHeightFac arg in plotlyPearsonsCouple)
-	if (includeFacet[1] && topHeightFac != 1){
+	if (includeFacet[1] & topHeightFac != 1){
 		gt = ggplot_gtable(ggplot_build(f))
 		gt$heights[7] = topHeightFac*gt$heights[7]
 		f <- as.ggplot(gt)
@@ -224,7 +241,7 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("Partner 
 	#   ymax and ymin.  If I change these y limits to non-Inf values, then I need to have diff limits for each facet, which annotate can't do.
 	#   So, I will create a bunch of rects for each facet...
 	if (showPrects){
-		significantT <- usedf$intervalStartTime[usedf$pearson_correlation_pvalue < plimit & !is.na(usedf$pearson_correlation_pvalue)]
+		significantT <- usedf[[columnNames$independentVar]][usedf$pearson_correlation_pvalue < plimit & !is.na(usedf$pearson_correlation_pvalue)]
 
 		# limit these to start and end values for drawing rects
 		# https://stackoverflow.com/questions/26603858/r-how-to-find-non-sequential-elements-in-an-array
@@ -242,7 +259,7 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("Partner 
 			ylims = layer_scales(f, i = i)$y$get_limits()
 			rectData <- data.frame("xmin" = rectStarts, "xmax" = rectEnds, "group" = groups[includeFacet][i], "ymin" = ylims[1], "ymax" = ylims[2])
 
-		    annot <- geom_rect(data = rectData, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax), alpha = prectsAlpha, fill = colors['prects'], inherit.aes = FALSE)
+			annot <- geom_rect(data = rectData, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax), alpha = prectsAlpha, fill = colors['prects'], inherit.aes = FALSE)
 			f$layers <- c(annot, f$layers)
 		}
 	}
@@ -250,7 +267,7 @@ plotPearsonsCouple <- function(usedf, columnID = "meanIBI", colors = c("Partner 
 	return(f)
 }
 
-plotlyPearsonsCouple <- function(f, columnID = "meanIBI", topHeightFac = 1, height = 800,  columnYlimit = c(NA, NA)){
+plotlyPearsonsCouple <- function(f, columnNames = data.frame(list(individualID = "Ind_ID", coupleID = "Couple_ID", task = "conversation", independentVar = "intervalStartTime", dependentVar = "meanIBI")), topHeightFac = 1, height = 800,  columnYlimit = c(NA, NA)){
 	# convert the figure above into a plotly version for Shiny
 	gp <- ggplotly(f, height = height)
 
@@ -279,7 +296,7 @@ plotlyPearsonsCouple <- function(f, columnID = "meanIBI", topHeightFac = 1, heig
 	}
 
 	# adjust the size of each panel Pearson's plots are smaller in the y dimension
-	if (topHeightFac != 1 && !is.null(gp$x$layout$yaxis2)){
+	if (topHeightFac != 1 & !is.null(gp$x$layout$yaxis2)){
 		spacing <- as.numeric(gp$x$layout$yaxis$domain[[1]] - gp$x$layout$yaxis2$domain[[2]])
 		size <- as.numeric(1. - gp$x$layout$yaxis$domain[[1]])
 		if (!is.null(gp$x$layout$yaxis3)){
@@ -329,7 +346,7 @@ plotlyPearsonsCouple <- function(f, columnID = "meanIBI", topHeightFac = 1, heig
 
 
 	# adjust the y axis limits for the top panel (if it is not a Pearson's plot)
-	if (!is.null(gp$x$layout$yaxis) && gp$x$layout$annotations[[2]]$text == columnID){
+	if (!is.null(gp$x$layout$yaxis) & gp$x$layout$annotations[[2]]$text == columnNames$dependentVar){
 		if (!is.na(columnYlimit[1])) gp$x$layout$yaxis$range[1] = columnYlimit[1]
 		if (!is.na(columnYlimit[2])) gp$x$layout$yaxis$range[2] = columnYlimit[2]
 	}
@@ -337,9 +354,9 @@ plotlyPearsonsCouple <- function(f, columnID = "meanIBI", topHeightFac = 1, heig
 	return(gp)
 }
 
-runPearsonsAll <- function(df, window, columnID = "meanIBI", format = "new"){
+runPearsonsAll <- function(df, window, columnNames = data.frame(list(individualID = "Ind_ID", coupleID = "Couple_ID", task = "conversation", independentVar = "intervalStartTime", dependentVar = "meanIBI")), format = "new"){
 	# generate Pearson's correlation statistics for all values in the input table
-	# across all couples and all conversations
+	# across all couples and all tasks
 
 	# it will be important here to have a progress indicator
 
@@ -347,8 +364,8 @@ runPearsonsAll <- function(df, window, columnID = "meanIBI", format = "new"){
 	if (format == "new"){
 		outdf <- setNames(
 			data.frame(matrix(ncol = 11, nrow = 0)), 
-			c('Couple_ID', 'Ind_ID_1', 'Ind_ID_2', 'conversation','intervalStartTime', 
-			  paste0(columnID,'_1'), paste0(columnID,'_2'), 'pearson_correlation_coefficient',
+			c('Couple_ID', 'Ind_ID_1', 'Ind_ID_2', columnNames$task, columnNames$independentVar, 
+			  paste0(columnNames$dependentVar,'_1'), paste0(columnNames$dependentVar,'_2'), 'pearson_correlation_coefficient',
 			  'pearson_correlation_pvalue')
 		)
 	} else {
@@ -357,37 +374,37 @@ runPearsonsAll <- function(df, window, columnID = "meanIBI", format = "new"){
 	}
 
 	# unique dyads
-	Couple_IDs <- unique(df$Couple_ID)
-	conversations <- unique(df$conversation)
+	Couple_IDs <- unique(df[[columnNames$coupleID]])
+	tasks <- unique(df[[columnNames$task]])
 
 	# loop over the couples (dyads)
 	if (interactive()){
 		withProgress(message = 'Analyzing data', value = 0, {
-			outdf <- runPearsonsAllLoop(df, outdf, Couple_IDs, conversations, window, columnID, format = format)
+			outdf <- runPearsonsAllLoop(df, outdf, Couple_IDs, tasks, window, format, columnNames)
 		})
 	} else {
-		outdf <- runPearsonsAllLoop(df, outdf, Couple_IDs, conversations, window, columnID, format = format)
+		outdf <- runPearsonsAllLoop(df, outdf, Couple_IDs, tasks, window, format, columnNames)
 	}
 
 	return(outdf)
 
 }
-runPearsonsAllLoop <- function(df, outdf, Couple_IDs, conversations, window, columnID, format){
+runPearsonsAllLoop <- function(df, outdf, Couple_IDs, tasks, window, format, columnNames = data.frame(list(individualID = "Ind_ID", coupleID = "Couple_ID", task = "conversation", independentVar = "intervalStartTime", dependentVar = "meanIBI"))) {
 	# separating this out into another function so that I can have a version that I can control if I show a progress bar
 
-	nTotal <- length(Couple_IDs)*length(conversations)
+	nTotal <- length(Couple_IDs)*length(tasks)
 	for (CoupleID in Couple_IDs){
-		# select the couple in order to get the unique conversations
-		df0 <- df[df$Couple_ID == CoupleID, ]
+		# select the couple in order to get the unique tasks
+		df0 <- df[df[columnNames$coupleID] == CoupleID, ]
 
-		# unique conversations (redefine this incase there are different conversations for each dyad)
-		conversations <- unique(df0$conversation)
+		# unique tasks (redefine this incase there are different tasks for each dyad)
+		tasks <- unique(df0[[columnNames$task]])
 
-		# loop over the conversations
-		for (conv in conversations){
+		# loop over the tasks
+		for (conv in tasks){
 
 			# run the Pearson's correlation
-			usedf <- runPearsonsCouple(df, CoupleID, conv, window, columnID, format=format)
+			usedf <- runPearsonsCouple(df, CoupleID, conv, window, columnNames, format=format)
 
 			outdf <- rbind(outdf, usedf)
 			if (interactive()) incProgress(1./nTotal, detail = paste(CoupleID, conv))
@@ -434,17 +451,17 @@ exportToFile <- function(df, filename){
 # previous plotting code, with 4 panels (not used in Shiny app)
 ###########################
 
-plotPearsonsCoupleOrg <- function(usedf, columnID = "meanIBI"){
+plotPearsonsCoupleOrg <- function(usedf, dependentVar = "meanIBI"){
 	# this assumes output from the runPearsonsCouple function
 
 	# unique people
 	Ind_IDs <- unique(usedf$Ind_ID)
 
 	# create a new dataframe that I can be used with ggplot facets
-	fee <- usedf[, c('intervalStartTime', columnID, 'Ind_ID')]
+	fee <- usedf[, c('intervalStartTime', dependentVar, 'Ind_ID')]
 	foo <- select(usedf[usedf$Ind_ID == Ind_IDs[1],], intervalStartTime, pearson_correlation_coefficient)
 	bar <- select(usedf[usedf$Ind_ID == Ind_IDs[1],], intervalStartTime, pearson_correlation_pvalue)
-	fee$Ind_ID <- paste(fee$Ind_ID, columnID)
+	fee$Ind_ID <- paste(fee$Ind_ID, dependentVar)
 	foo$Ind_ID <- "Pearson coefficient"
 	bar$Ind_ID <- "Pearson p-value"
 	names(fee) <- c("Interval Start Time (s)", "value","group")
