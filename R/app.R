@@ -113,6 +113,12 @@ ShinyLinkageAnalysis <- function(){
 						selectInput("taskColumn", "Task column name:", colnames(df) ),
 						selectInput("independentVarColumn", "Independent variable column name:", colnames(df) ),
 						selectInput("dependentVarColumn", "Dependent variable column name:", colnames(df) ),
+						# bsTooltip(id = "individualIDColumn", title = "Select the column that contains unique values for each individual."),
+						# bsTooltip(id = "coupleIDColumn", title = "Select the column that contains unique values for each couple.  There should be two individual IDs for each couple ID."),
+						# bsTooltip(id = "taskColumn", title = "Select the column that contains the task names during which measurements were made of each couple.  This column can contain multiple tasks."),
+						# bsTooltip(id = "independentVarColumn", title = "Select the column that contains the independent variable (e.g., time)."),
+						# bsTooltip(id = "dependentVarColumn", title = "Select the column that contains the dendent variable (e.g., heart rate)."),
+
 
 						h5("Click the button below to prepare the data."),
 						actionButton("dataProcessed", "Prepare the data"),
@@ -221,7 +227,7 @@ ShinyLinkageAnalysis <- function(){
 
 			# Generate the plot
 
-			f <- plotPearsonsCouple(usedf, columnNames, includeFacet = c(input$showMeasurement, input$showPC, input$showPP), addPlimit = input$showPlimit, plimit = as.numeric(input$plimitVal), plotPoints = c(input$showMeasurementPoints, input$showPCPoints, input$showPPPoints), colors = c("Partner 1" = input$partner1Color1, "Partner 2" = input$partner2Color2, "Pearson" = input$pearsonColor, "plimit" = input$plimitColor, "prects" = input$prectsColor), showPrects = input$showPrects, prectsAlpha = as.numeric(input$prectsAlpha) )
+			f <- plotPearsonsCouple(usedf, columnNames, includeFacet = c(input$showMeasurement, input$showPC, input$showPP), addPlimit = input$showPlimit, plimit = as.numeric(input$plimitVal), plotPoints = c(input$showMeasurementPoints, input$showPCPoints, input$showPPPoints), colors = c("Partner 1" = input$partner1Color1, "Partner 2" = input$partner2Color2, "Pearson" = input$pearsonColor, "plimit" = input$plimitColor, "prects" = input$prectsColor), showPrects = input$showPrects, prectsAlpha = as.numeric(input$prectsAlpha), forPlotly = TRUE, dependentYrange = c(as.numeric(input$minYlimit), as.numeric(input$maxYlimit)))
 
 			height <- sum(c(460, 180, 180)*c(input$showMeasurement, input$showPC, input$showPP))
 			height <- max(height, 400)
@@ -230,7 +236,7 @@ ShinyLinkageAnalysis <- function(){
 
 			# Render the plot using plotly (for interactivity)
 			output$PearsonsPlot <- renderPlotly(
-				plotlyPearsonsCouple(f, columnNames, topHeightFac = topHeightFac, height = height,  columnYlimit = c(as.numeric(input$minYlimit), as.numeric(input$maxYlimit)) )
+				plotlyPearsonsCouple(f, columnNames, topHeightFac = topHeightFac, height = height )
 			)
 
 			show("mainPanel")

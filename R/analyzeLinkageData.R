@@ -158,7 +158,7 @@ runPearsonsCouple <- function(df, coupleID, task, window, columnNames = data.fra
 }
 
 
-plotPearsonsCouple <- function(usedf, columnNames = data.frame(list(individualID = "Ind_ID", coupleID = "Couple_ID", task = "conversation", independentVar = "intervalStartTime", dependentVar = "meanIBI")), colors = c("Partner 1" = "#F8766D", "Partner 2" = "#00BFC4", "Pearson" = "black", "plimit" = "#7CAE00", "prects" = "#C77CFF"), includeFacet = c(TRUE, TRUE, TRUE), addPlimit = TRUE, plimit = 0.05, prectsAlpha = 0.3, plotPoints = c(TRUE, TRUE, TRUE), pointSize = 0.7, topHeightFac = 1, showPrects = FALSE){
+plotPearsonsCouple <- function(usedf, columnNames = data.frame(list(individualID = "Ind_ID", coupleID = "Couple_ID", task = "conversation", independentVar = "intervalStartTime", dependentVar = "meanIBI")), colors = c("Partner 1" = "#F8766D", "Partner 2" = "#00BFC4", "Pearson" = "black", "plimit" = "#7CAE00", "prects" = "#C77CFF"), includeFacet = c(TRUE, TRUE, TRUE), addPlimit = TRUE, plimit = 0.05, prectsAlpha = 0.3, plotPoints = c(TRUE, TRUE, TRUE), pointSize = 0.7, topHeightFac = 1, showPrects = FALSE, forPlotly = FALSE, dependentYrange = c(NA, NA)){
 	# this assumes output from the runPearsonsCouple function
 
 	# unique people
@@ -192,7 +192,6 @@ plotPearsonsCouple <- function(usedf, columnNames = data.frame(list(individualID
 
 	# generate the plot
 	f <- ggplot(data = plotData, aes(x = .data[["Time (s)"]], y = value, group = group, color = ID)) +
-		geom_line() + 
 		scale_color_manual(values = colors, name = "", breaks = c('Partner 1', 'Partner 2')) + 
 		facet_grid(rows = vars(group), scales = "free_y", switch = "y",
 			labeller = as_labeller(c())
@@ -213,6 +212,24 @@ plotPearsonsCouple <- function(usedf, columnNames = data.frame(list(individualID
 				b = 10,  # Bottom margin
 				l = 40)  # Left margin
 		) 
+
+	# if this is for plotly, then don't include the extra aes for the line because it shows up as a duplicate in the tooltip!
+	ifelse(forPlotly, f <- f + geom_line(), f <- f + geom_line(aes(group = ID)) )
+
+	# adjust the y axis limits for each panel
+	# this user can specify for the top panel showing dependent vs. independent measurements 
+	panel_ranges <- vector(mode = "list", length = 0)
+	if (includeFacet[1]) {
+		initialRange <- layer_scales(f, i = 1)$y$get_limits()
+		if (is.na(dependentYrange[1])) dependentYrange[1] <- initialRange[1]
+		if (is.na(dependentYrange[2])) dependentYrange[2] <- initialRange[2]
+
+		panel_ranges <- append(panel_ranges, list(list(y = dependentYrange)))
+	}
+	if (includeFacet[2]) panel_ranges <- append(panel_ranges, list(list(y = c(-1.02, 1.02))))
+	if (includeFacet[3]) panel_ranges <- append(panel_ranges, list(list(y = c(-0.01, 1.01))))
+	f <- f + coord_panel_ranges(panel_ranges = panel_ranges)
+	
 
 	# if the user wants to add points, include only in the desired facets
 	if (any(plotPoints)) f <- f + geom_point(data = plotData %>% filter(group %in% groups[plotPoints]),
@@ -254,20 +271,25 @@ plotPearsonsCouple <- function(usedf, columnNames = data.frame(list(individualID
 		# }
 
 		# create rects 
-		for (i in 1:length(groups[includeFacet])){
-			# draw the rectangles (below the other layers)
-			ylims = layer_scales(f, i = i)$y$get_limits()
-			rectData <- data.frame("xmin" = rectStarts, "xmax" = rectEnds, "group" = groups[includeFacet][i], "ymin" = ylims[1], "ymax" = ylims[2])
+		for (i in 1:length(includeFacet)){
+			if (includeFacet[i]){
+				# draw the rectangles (below the other layers)
+				if (i == 1) ylims <- dependentYrange
+				if (i == 2) ylims <- c(-1.02, 1.02)
+				if (i == 3) ylims <- c(-0.01, 1.01)
 
-			annot <- geom_rect(data = rectData, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax), alpha = prectsAlpha, fill = colors['prects'], inherit.aes = FALSE)
-			f$layers <- c(annot, f$layers)
+				rectData <- data.frame("xmin" = rectStarts, "xmax" = rectEnds, "group" = groups[i], "ymin" = ylims[1], "ymax" = ylims[2])
+
+				annot <- geom_rect(data = rectData, aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax), alpha = prectsAlpha, fill = colors['prects'], inherit.aes = FALSE)
+				f$layers <- c(annot, f$layers)
+			}
 		}
 	}
 
 	return(f)
 }
 
-plotlyPearsonsCouple <- function(f, columnNames = data.frame(list(individualID = "Ind_ID", coupleID = "Couple_ID", task = "conversation", independentVar = "intervalStartTime", dependentVar = "meanIBI")), topHeightFac = 1, height = 800,  columnYlimit = c(NA, NA)){
+plotlyPearsonsCouple <- function(f, columnNames = data.frame(list(individualID = "Ind_ID", coupleID = "Couple_ID", task = "conversation", independentVar = "intervalStartTime", dependentVar = "meanIBI")), topHeightFac = 1, height = 800){
 	# convert the figure above into a plotly version for Shiny
 	gp <- ggplotly(f, height = height)
 
@@ -342,13 +364,6 @@ plotlyPearsonsCouple <- function(f, columnNames = data.frame(list(individualID =
 		gp$x$layout$annotations[[3]]$y <- (gp$x$layout$yaxis2$domain[[2]] - gp$x$layout$yaxis2$domain[[1]])/2. + gp$x$layout$yaxis2$domain[[1]]
 		if (!is.null(gp$x$layout$yaxis3)) gp$x$layout$annotations[[4]]$y <- (gp$x$layout$yaxis3$domain[[2]] - gp$x$layout$yaxis3$domain[[1]])/2. + gp$x$layout$yaxis3$domain[[1]]
 
-	}
-
-
-	# adjust the y axis limits for the top panel (if it is not a Pearson's plot)
-	if (!is.null(gp$x$layout$yaxis) & gp$x$layout$annotations[[2]]$text == columnNames$dependentVar){
-		if (!is.na(columnYlimit[1])) gp$x$layout$yaxis$range[1] = columnYlimit[1]
-		if (!is.na(columnYlimit[2])) gp$x$layout$yaxis$range[2] = columnYlimit[2]
 	}
 
 	return(gp)
