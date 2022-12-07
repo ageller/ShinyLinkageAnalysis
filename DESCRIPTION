@@ -4,7 +4,7 @@ Version: 0.0.0.9000
 Authors@R: 
     person("Aaron", "Geller", , "a-geller@northwestern.edu", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-3881-9332"))
-Description: A Shiny app to investigate Pearson's correlations in biometric data.
+Description: A Shiny app to investigate correlations in biometric data.
 License: use_mit_license()
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

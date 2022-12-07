@@ -74,7 +74,7 @@ ShinyLinkageAnalysis <- function(){
 
 		# plots
 		mainPanel(
-			plotlyOutput("PearsonsPlot"),
+			plotlyOutput("CorrelationPlot"),
 			height = "1000px",
 			id = "mainPanel"
 		)
@@ -174,38 +174,41 @@ ShinyLinkageAnalysis <- function(){
 							column(6, selectInput("task", "Task:", tasks, selected = tasks[1])),
 						),
 
-						h5("3. Select the time window for the Pearson's correlation."),
+						h5("3. Select the time window for the correlation."),
 						fluidRow(
 							column(10, sliderInput("windowSliderValue", "Window (seconds) :", 0, 600, 15, step = 1)),
 							column(2, textInput("windowTextValue", "", value = 15)),
 						),
 
-						h5("4. Customize the plot."),
+						h5("4. Select the correlation method."),
+						selectInput("correlationMethod", "Method:", c("pearson", "spearman"), selected = "pearson"),
+
+						h5("5. Customize the plot."),
 						bsCollapse(id = "collapsableCustomize",
 							bsCollapsePanel("Click here to show/hide options", "", style = "default",
 								div(
 									checkboxInput("showMeasurement", paste("Show", columnNames$dependentVar, "panel"), value = TRUE),
-									checkboxInput("showPC", "Show Pearson's coefficient panel", value = TRUE),
-									checkboxInput("showPP", "Show Pearson's p-value panel", value = TRUE),
+									checkboxInput("showPC", "Show correlation coefficient panel", value = TRUE),
+									checkboxInput("showPP", "Show correlation p-value panel", value = TRUE),
 									checkboxInput("showMeasurementPoints", paste("Include points in", columnNames$dependentVar, "panel"), value = FALSE),
-									checkboxInput("showPCPoints", "Include points in Pearson's coefficient panel", value = TRUE),
-									checkboxInput("showPPPoints", "Include points in Pearson's p-value panel", value = TRUE),
-									checkboxInput("showPlimit", "Show Pearson's p-value limit line", value = TRUE),
+									checkboxInput("showPCPoints", "Include points in correlation coefficient panel", value = TRUE),
+									checkboxInput("showPPPoints", "Include points in correlation p-value panel", value = TRUE),
+									checkboxInput("showPlimit", "Show correlation p-value limit line", value = TRUE),
 									checkboxInput("showPrects", "Show rectangle for significant correlation regions", value = FALSE),
 									colourInput("partner1Color1","Color for Partner 1:", value = "#F8766D"),
 									colourInput("partner2Color2","Color for Partner 2:", value = "#00BFC4"),
-									colourInput("pearsonColor","Color for Pearson's plots:", value = "black"),
+									colourInput("correlationColor","Color for correlation plots:", value = "black"),
 									colourInput("plimitColor","Color for p-value limit line:", value = "#7CAE00"),
 									colourInput("prectsColor","Color for regions of significant correlation", value = "#C77CFF"),
 									textInput("prectsAlpha", "Opacity for regions of significant correlation:", value = 0.3),
-									textInput("plimitVal", "Pearson's p-value significance limit:", value = 0.05),
+									textInput("plimitVal", "Correlation p-value significance limit:", value = 0.05),
 									textInput("maxYlimit", paste("Maximum value for the y axix on the", columnNames$dependentVar, "panel (leave blank for autoscaling)"), value = NA),
 									textInput("minYlimit", paste("Minimum value for the y axix on the", columnNames$dependentVar, "panel (leave blank for autoscaling)"), value = NA)
 								)
 							)
 						),
 
-						h5("5. Click the button below to update the plot."),
+						h5("6. Click the button below to update the plot."),
 						actionButton("updatePlot", "Update Plot"),
 					)
 				)
@@ -231,11 +234,11 @@ ShinyLinkageAnalysis <- function(){
 			#hide("mainPanel")
 
 			# Run the correlation on the desired data
-			usedf <- runPearsonsCouple(df, input$coupleID, input$task, as.numeric(input$windowTextValue), columnNames)
+			usedf <- runCorrelationCouple(df, input$coupleID, input$task, as.numeric(input$windowTextValue), columnNames, correlationMethod = input$correlationMethod)
 
 			# Generate the plot
 
-			f <- plotPearsonsCouple(usedf, columnNames, includeFacet = c(input$showMeasurement, input$showPC, input$showPP), addPlimit = input$showPlimit, plimit = as.numeric(input$plimitVal), plotPoints = c(input$showMeasurementPoints, input$showPCPoints, input$showPPPoints), colors = c("Partner 1" = input$partner1Color1, "Partner 2" = input$partner2Color2, "Pearson" = input$pearsonColor, "plimit" = input$plimitColor, "prects" = input$prectsColor), showPrects = input$showPrects, prectsAlpha = as.numeric(input$prectsAlpha), forPlotly = TRUE, dependentYrange = c(as.numeric(input$minYlimit), as.numeric(input$maxYlimit)))
+			f <- plotCorrelationCouple(usedf, columnNames, includeFacet = c(input$showMeasurement, input$showPC, input$showPP), addPlimit = input$showPlimit, plimit = as.numeric(input$plimitVal), plotPoints = c(input$showMeasurementPoints, input$showPCPoints, input$showPPPoints), colors = c("Partner 1" = input$partner1Color1, "Partner 2" = input$partner2Color2, "Correlation" = input$correlationColor, "plimit" = input$plimitColor, "prects" = input$prectsColor), showPrects = input$showPrects, prectsAlpha = as.numeric(input$prectsAlpha), forPlotly = TRUE, dependentYrange = c(as.numeric(input$minYlimit), as.numeric(input$maxYlimit)), correlationMethod = input$correlationMethod)
 
 			height <- sum(c(460, 180, 180)*c(input$showMeasurement, input$showPC, input$showPP))
 			height <- max(height, 400)
@@ -243,8 +246,8 @@ ShinyLinkageAnalysis <- function(){
 			if (input$showMeasurement) topHeightFac <- 1.5
 
 			# Render the plot using plotly (for interactivity)
-			output$PearsonsPlot <- renderPlotly(
-				plotlyPearsonsCouple(f, columnNames, topHeightFac = topHeightFac, height = height )
+			output$CorrelationPlot <- renderPlotly(
+				plotlyCorrelationCouple(f, columnNames, topHeightFac = topHeightFac, height = height, correlationMethod = input$correlationMethod)
 			)
 
 			show("mainPanel")
@@ -258,8 +261,8 @@ ShinyLinkageAnalysis <- function(){
 				paste0('linkageData-', Sys.Date(), '.csv')
 			},
 			content = function(fname) {
-				outdf <- runPearsonsAll(df, as.numeric(input$windowTextValue), columnNames)
-				write.csv(renameColumns(outdf), fname, row.names = FALSE)
+				outdf <- runCorrelationAll(df, as.numeric(input$windowTextValue), columnNames, correlationMethod = input$correlationMethod)
+				write.csv(renameColumns(outdf, correlationMethod = input$correlationMethod), fname, row.names = FALSE)
 			}
 		)
 
