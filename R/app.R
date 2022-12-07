@@ -121,11 +121,11 @@ ShinyLinkageAnalysis <- function(){
 						selectInput("taskColumn", "Task column name :", colnames(df) ),
 						selectInput("independentVarColumn", "Independent variable column name:", colnames(df) ),
 						selectInput("dependentVarColumn", "Dependent variable column name:", colnames(df) ),
-						bsTooltip(id = "individualIDColumn", title = "Select the column that contains unique values for each individual."),
-						bsTooltip(id = "coupleIDColumn", title = "Select the column that contains unique values for each couple.  There should be two individual IDs for each couple ID."),
-						bsTooltip(id = "taskColumn", title = "Select the column that contains the task names during which measurements were made of each couple.   This column can contain multiple different tasks. (For instance, this could contain \"control\" and \"experiment\" tasks.)"),
-						bsTooltip(id = "independentVarColumn", title = "Select the column that contains the variable that should be plotted on the \"x\" axis (e.g., time)."),
-						bsTooltip(id = "dependentVarColumn", title = "Select the column that contains the variable that should be plotted on the \"y\" axis (e.g., heart rate)."),
+						bsTooltip(id = "individualIDColumn", title = "Select the column that contains unique values for each individual.", placement = "right", options = list(container = "body")),
+						bsTooltip(id = "coupleIDColumn", title = "Select the column that contains unique values for each couple.  There should be two individual IDs for each couple ID.", placement = "right", options = list(container = "body")),
+						bsTooltip(id = "taskColumn", title = "Select the column that contains the task names during which measurements were made of each couple.   This column can contain multiple different tasks. (For instance, this could contain \"control\" and \"experiment\" tasks.)", placement = "right", options = list(container = "body")),
+						bsTooltip(id = "independentVarColumn", title = "Select the column that contains the variable that should be plotted on the \"x\" axis (e.g., time).", placement = "right", options = list(container = "body")),
+						bsTooltip(id = "dependentVarColumn", title = "Select the column that contains the variable that should be plotted on the \"y\" axis (e.g., heart rate).", placement = "right", options = list(container = "body")),
 
 
 						h5("Click the button below to prepare the data."),
