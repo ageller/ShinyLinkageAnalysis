@@ -2,6 +2,7 @@ library(shiny)
 library(shinyjs)
 library(shinythemes)
 library(shinyBS)
+library(shinyalert)
 
 library(dplyr)
 library(ggplot2)
@@ -85,6 +86,13 @@ ShinyLinkageAnalysis <- function(){
 		# increase the maximum file size
 		options(shiny.maxRequestSize = 30*1024^2) 
 
+		# Show the IRB agreement
+		shinyalert(
+			title = "<p style = 'font-size:3vh; font-weight:bold'>Welcome to the <i>Linkage Data Explorer</i>.  Before proceeding, please read and agree to the following privacy statement.</p>
+			<p style = 'font-size:3vh; margin-top:2vh'>I agree to not upload any identifiable information, code, or key per HIPAA and PII standard and to abide by any additional regulations of my host country and institution.</p>
+<p style = 'font-size:2vh; font-style: italic; margin-top:2vh'>Identifiable means that the identity of an individual is or may be ascertained by the researcher (e.g., name, social security number). Code means an individual’s identifiable information has been replaced by a code (e.g., numbers, letters). Key means that there is a key to link the identifiable information and code of an individual.</p>", 
+			 html = TRUE, showConfirmButton = TRUE, size = "l", confirmButtonText = "I Agree", closeOnEsc = FALSE, closeOnClickOutside = FALSE, immediate = TRUE
+		)
 
 		# after the file is loaded, select the columns
 		observe({
@@ -106,18 +114,18 @@ ShinyLinkageAnalysis <- function(){
 
 				output$uiStep1b <- renderUI(
 					div(id = "uiStep1b",
-						h6("Identify the columns to use in this analysis."),
+						h6("Identify the columns to use in this analysis.  (Place your mouse over a dropdown for more information.)"),
 
 						selectInput("individualIDColumn", "Individual ID column name:", colnames(df) ),
 						selectInput("coupleIDColumn", "Dyad ID column name:", colnames(df) ),
-						selectInput("taskColumn", "Task column name:", colnames(df) ),
+						selectInput("taskColumn", "Task column name :", colnames(df) ),
 						selectInput("independentVarColumn", "Independent variable column name:", colnames(df) ),
 						selectInput("dependentVarColumn", "Dependent variable column name:", colnames(df) ),
-						# bsTooltip(id = "individualIDColumn", title = "Select the column that contains unique values for each individual."),
-						# bsTooltip(id = "coupleIDColumn", title = "Select the column that contains unique values for each couple.  There should be two individual IDs for each couple ID."),
-						# bsTooltip(id = "taskColumn", title = "Select the column that contains the task names during which measurements were made of each couple.  This column can contain multiple tasks."),
-						# bsTooltip(id = "independentVarColumn", title = "Select the column that contains the independent variable (e.g., time)."),
-						# bsTooltip(id = "dependentVarColumn", title = "Select the column that contains the dendent variable (e.g., heart rate)."),
+						bsTooltip(id = "individualIDColumn", title = "Select the column that contains unique values for each individual."),
+						bsTooltip(id = "coupleIDColumn", title = "Select the column that contains unique values for each couple.  There should be two individual IDs for each couple ID."),
+						bsTooltip(id = "taskColumn", title = "Select the column that contains the task names during which measurements were made of each couple.   This column can contain multiple different tasks. (For instance, this could contain \"control\" and \"experiment\" tasks.)"),
+						bsTooltip(id = "independentVarColumn", title = "Select the column that contains the variable that should be plotted on the \"x\" axis (e.g., time)."),
+						bsTooltip(id = "dependentVarColumn", title = "Select the column that contains the variable that should be plotted on the \"y\" axis (e.g., heart rate)."),
 
 
 						h5("Click the button below to prepare the data."),
