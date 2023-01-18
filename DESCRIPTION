@@ -7,4 +7,4 @@ Authors@R:
 Description: A Shiny app to investigate correlations in biometric data.
 License: use_mit_license()
 Encoding: UTF-8
-Imports: shiny, shinyjs, shinythemes, dplyr, ggplot2, grid, plotly, ggplotify, colourpicker, shinyBS, shinyalert
+Imports: shiny, shinythemes, dplyr, ggplot2, grid, plotly, ggplotify, colourpicker, shinyalert, shinyBS, shinyjs
