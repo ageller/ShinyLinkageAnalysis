@@ -5,14 +5,14 @@ A Shiny app to investigate correlations in biometric data.
 ## Installing as a package (recommended)
 This app, and it's dependencies, can be installed as a package using [remotes](https://github.com/r-lib/remotes) with the following command within a R session:
 ```
-> remotes::install_github("ageller/ShinyLinkageAnalysis")
+remotes::install_github("ageller/ShinyLinkageAnalysis")
 ```
 
-Once installed you can run the app with:
+Once installed you can run the app with (within an R session):
 ```
-> library(shinyBS)
-> library(ShinyLinkageAnalysis)
-> ShinyLinkageAnalysis()
+library(shinyBS)
+library(ShinyLinkageAnalysis)
+ShinyLinkageAnalysis()
 ```
 
 This should launch a web browser that contains the app.  
@@ -37,12 +37,12 @@ You can also use the same functions outside the Shiny app (for instance within R
 
 ```
 # first, load the library.
-> library(ShinyLinkageAnalysis)
+library(ShinyLinkageAnalysis)
 ```
 
 ```
 # define the columns that will contain the data to be analyzed
-> columnNames = data.frame(list(
+columnNames = data.frame(list(
 	individualID = "Ind_ID", 
 	coupleID = "Couple_ID",
 	task = "conversation", 
@@ -53,14 +53,14 @@ You can also use the same functions outside the Shiny app (for instance within R
 
 ```
 # read in the data (in inputfile.csv) and format it correctly
-> df <- ShinyLinkageAnalysis::readData("inputfile.csv") 
-> df <- ShinyLinkageAnalysis::processData(df, columnNames)
+df <- ShinyLinkageAnalysis::readData("inputfile.csv") 
+df <- ShinyLinkageAnalysis::processData(df, columnNames)
 ```
 
 ```
 # get the Pearson's correlation statistics for dyad 1 using the "Negative" conversation 
 # with a window of 15 seconds
-> usedf <- ShinyLinkageAnalysis::runCorrelationCouple(df, 1, "Negative", 15, columnNames) 
+usedf <- ShinyLinkageAnalysis::runCorrelationCouple(df, 1, "Negative", 15, columnNames) 
 ```
 
 ```
@@ -69,7 +69,7 @@ You can also use the same functions outside the Shiny app (for instance within R
 #    These are used within the Shiny app, but are also available here.  
 #    If you would like to use them directly from the R command line and need assistance, 
 #    please use the "issues" in GitHub to request additional documentation. 
-> ShinyLinkageAnalysis::plotCorrelationCouple(usedf, columnNames)  
+ShinyLinkageAnalysis::plotCorrelationCouple(usedf, columnNames)  
 ```
 
 ```
@@ -77,12 +77,12 @@ You can also use the same functions outside the Shiny app (for instance within R
 # with a window of 15 seconds.
 # Note: this will provide a reformatted file; if the user desires to keep the current formatting, 
 #    they can supply the arg : format = "original".
-> outdf <- ShinyLinkageAnalysis::runCorrelationAll(df, 15, columnNames)
+outdf <- ShinyLinkageAnalysis::runCorrelationAll(df, 15, columnNames)
 ```
 
 ```
 # write the output dataframe to a csv file named outputfile.csv
-> ShinyLinkageAnalysis::exportToFile(outdf, "outputfile.csv") 
+ShinyLinkageAnalysis::exportToFile(outdf, "outputfile.csv") 
 ```
 
 ---
@@ -92,15 +92,15 @@ You can also use the same functions outside the Shiny app (for instance within R
 If you prefer not to install this as a package, you can download these files (or clone this repo) from GitHub.  You will also need to install all the dependecies listed in Imports within the DESCRIPTION file and also devtools.  Then you can run this app in an R session within the root directory of this repo by typing the following commands:
 
 ```
-> devtools::load_all()
-> ShinyLinkageAnalysis()
+devtools::load_all()
+ShinyLinkageAnalysis()
 ```
 
 If you want to use the functions outside the Shiny app :
 
 ```
 # You will first need to load in the R script:
-> source("R/analyzeLinkageData.R")
+source("R/analyzeLinkageData.R")
 ```
 
 Then you can follow the examples from above, but removing `ShinyLinkageAnalysis::` .
