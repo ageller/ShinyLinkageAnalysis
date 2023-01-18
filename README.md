@@ -2,6 +2,8 @@
 
 A Shiny app to investigate correlations in biometric data.
 
+A live version is available [here](https://northwestern-linkage-analysis.shinyapps.io/correlation/).
+
 ## Installing as a package (recommended)
 This app, and it's dependencies, can be installed as a package using [remotes](https://github.com/r-lib/remotes) with the following command within a R session:
 ```
