@@ -66,25 +66,40 @@ processData <- function(df,  columnNames = data.frame(list(individualID = "Ind_I
 }
 
 runCorrelationCouple <- function(df, coupleID, task, window, columnNames = data.frame(list(individualID = "Ind_ID", coupleID = "Couple_ID", task = "conversation", independentVar = "intervalStartTime", dependentVar = "meanIBI")), format = "original", correlationMethod = "pearson"){
+
+	# select all the couple information to get the individual IDs so that they stay in the same order regardless of conversation
+	# for instance if only one member of the couple has data on a given conversation, there will be a nan which possibly will reorder 
+	# the individual IDs for that one conversation in the output file.  This should avoid that potential issue.
+	foo <- df[df[columnNames$coupleID] == coupleID,][[columnNames$individualID]]
+	
+	# unique people
+	Ind_IDs <- unique(na.omit(foo))
+
 	# select the dyad and the task
 	usedf <- df[df[columnNames$coupleID] == coupleID & df[columnNames$task] == task,]
 
-	# unique people
-	Ind_IDs <- unique(usedf[[columnNames$individualID]])
+	# below I want to use one individual ID to select values for columns (which are repeated in the input data set for both individual IDs)
+	useIndex <- 1
+	nMeasurements = nrow(usedf[usedf[[columnNames$individualID]] == Ind_IDs[1],])
+	if (nMeasurements == 0) useIndex <- 2
 
-	# the offset is half the windows
+	# the offset is half the window
 	offset <- as.integer((window - 1)/2)
 
 	# create empty vectors to store the correlation coefficients and pvalues
-	nMeasurements = nrow(usedf[usedf[[columnNames$individualID]] == Ind_IDs[1],])
+	nMeasurements <- nrow(usedf[usedf[[columnNames$individualID]] == Ind_IDs[useIndex],])
 	pcor <- vector("list", nMeasurements)
 	ppcor <- vector("list", nMeasurements)
 
 	# create a reformatted output file to pass as well
-	usedf2 <- usedf[usedf[[columnNames$individualID]] == Ind_IDs[1],][c(columnNames$coupleID, columnNames$task,columnNames$independentVar)]
-	usedf2$Ind_ID_1 <- Ind_IDs[1]
-	usedf2$Ind_ID_2 <- Ind_IDs[2]
-	usedf2[[paste0(columnNames$dependentVar,'_1')]] <- usedf[usedf[[columnNames$individualID]] == Ind_IDs[1],][[columnNames$dependentVar]]
+	usedf2 <- usedf[usedf[[columnNames$individualID]] == Ind_IDs[useIndex],][c(columnNames$coupleID, columnNames$task, columnNames$independentVar)]
+	usedf2[[paste0(columnNames$individualID,'_1')]] <- Ind_IDs[1]
+	usedf2[[paste0(columnNames$individualID,'_2')]] <- Ind_IDs[2]
+	usedf2[[paste0(columnNames$dependentVar,'_1')]] <- usedf[usedf[[columnNames$individualID]] == Ind_IDs[useIndex],][[columnNames$dependentVar]]
+	# reorder columns
+	usedf2 <- usedf2[, c(columnNames$coupleID, paste0(columnNames$individualID,'_1'), paste0(columnNames$individualID,'_2'), columnNames$task, columnNames$independentVar, paste0(columnNames$dependentVar,'_1'))]
+
+	# empty vectors to stor the correlation data
 	pcor2 <- vector("list", nMeasurements)
 	ppcor2 <- vector("list", nMeasurements)
 	column_2 <- vector("list", nMeasurements)
@@ -123,13 +138,15 @@ runCorrelationCouple <- function(df, coupleID, task, window, columnNames = data.
 			
 
 			# if each of these subsets of data are the same length, then calculate the correlation
-			if (nrow(rows0) == nrow(rows1) & sum(!is.na(rows0[[columnNames$dependentVar]])) > 2 & sum(!is.na(rows1[[columnNames$dependentVar]])) > 2){
-				havePcor <- TRUE
-				foo <- cor.test(rows0[[columnNames$dependentVar]], rows1[[columnNames$dependentVar]], method = correlationMethod, exact = FALSE)
-				pcor[i] <- foo$estimate
-				ppcor[i] <- foo$p.value
-				pcor2[i2] <- foo$estimate
-				ppcor2[i2] <- foo$p.value
+			if (nrow(rows0) == nrow(rows1)){
+				if (sum(!is.na(rows0[[columnNames$dependentVar]])) > 2 & sum(!is.na(rows1[[columnNames$dependentVar]])) > 2){
+					havePcor <- TRUE
+					foo <- cor.test(rows0[[columnNames$dependentVar]], rows1[[columnNames$dependentVar]], method = correlationMethod, exact = FALSE)
+					pcor[i] <- foo$estimate
+					ppcor[i] <- foo$p.value
+					pcor2[i2] <- foo$estimate
+					ppcor2[i2] <- foo$p.value
+				}
 			}
 		} 
 			
@@ -163,7 +180,6 @@ plotCorrelationCouple <- function(usedf, columnNames = data.frame(list(individua
 
 	# unique people
 	Ind_IDs <- unique(usedf[[columnNames$individualID]])
-
 
 	# create a new dataframe that can be used with ggplot facets
 	fee <- usedf[, c(columnNames$independentVar, columnNames$dependentVar, columnNames$individualID)]
@@ -458,6 +474,7 @@ renameColumns <- function(df, correlationMethod = "pearson"){
 exportToFile <- function(df, filename, correlationMethod = "pearson"){
 	# rename columns
 	outdf <- renameColumns(df, correlationMethod)
+	print(outdf)
 
 	# write to file
 	write.csv(outdf, filename, row.names = FALSE)
