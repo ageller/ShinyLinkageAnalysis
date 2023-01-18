@@ -90,7 +90,7 @@ ShinyLinkageAnalysis <- function(){
 		shinyalert(
 			title = "<p style = 'font-size:3vh; font-weight:bold'>Welcome to the <i>Linkage Data Explorer</i>.  Before proceeding, please read and agree to the following privacy statement.</p>
 			<p style = 'font-size:3vh; margin-top:2vh'>I agree to not upload any identifiable information, code, or key per HIPAA and PII standard and to abide by any additional regulations of my host country and institution.</p>
-<p style = 'font-size:2vh; font-style: italic; margin-top:2vh'>Identifiable means that the identity of an individual is or may be ascertained by the researcher (e.g., name, social security number). Code means an individual’s identifiable information has been replaced by a code (e.g., numbers, letters). Key means that there is a key to link the identifiable information and code of an individual.</p>", 
+			<p style = 'font-size:2vh; font-style: italic; margin-top:2vh; font-weight:400'>Identifiable means that the identity of an individual is or may be ascertained by the researcher (e.g., name, social security number). Code means an individual’s identifiable information has been replaced by a code (e.g., numbers, letters). Key means that there is a key to link the identifiable information and code of an individual.</p>", 
 			 html = TRUE, showConfirmButton = TRUE, size = "l", confirmButtonText = "I Agree", closeOnEsc = FALSE, closeOnClickOutside = FALSE, immediate = TRUE
 		)
 
