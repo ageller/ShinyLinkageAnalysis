@@ -51,8 +51,10 @@ ShinyLinkageAnalysis <- function(){
 
 		# App title and credit
 		headerPanel("Linkage Data Explorer"),
-		div(style="font-size:14px; padding-left:18px; margin-bottom:20px",
-			"Credit: Aaron M. Geller - Northwestern University IT Research Computing Services (RCS)"),
+		tags$div(style="font-size:14px; padding-left:18px; margin-bottom:20px",
+			tags$p("Credit: Aaron M. Geller - Northwestern University IT Research Computing Services (RCS)"),
+			tags$p("The code is available on GitHub ", tags$a(href="https://github.com/ageller/ShinyLinkageAnalysis", "here."), "For feature requests or other inquiries, please use the GitHub issues tab.  We will attempt to address any issues as time allows but cannot promise a prompt response.")
+		),
 
 		# ui
 		sidebarPanel(
