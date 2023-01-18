@@ -10,6 +10,7 @@ This app, and it's dependencies, can be installed as a package using [remotes](h
 
 Once installed you can run the app with:
 ```
+> library(shinyBS)
 > library(ShinyLinkageAnalysis)
 > ShinyLinkageAnalysis()
 ```
