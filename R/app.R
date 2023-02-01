@@ -123,7 +123,7 @@ ShinyLinkageAnalysis <- function(){
 						selectInput("taskColumn", "Task column name :", colnames(df) ),
 						selectInput("independentVarColumn", "Independent variable column name:", colnames(df) ),
 						selectInput("dependentVarColumn", "Dependent variable column name:", colnames(df) ),
-						bsTooltip(id = "individualIDColumn", title = "Select the column that contains unique values for each individual.", placement = "right", options = list(container = "body")),
+						bsTooltip(id = "individualIDColumn", title = "Select the column that contains unique values for each individual.  In the figures, individial IDs will be labeled as Partner 1, for the individual with the numerically lowest ID, and Partner 2, for the other individual.", placement = "right", options = list(container = "body")),
 						bsTooltip(id = "coupleIDColumn", title = "Select the column that contains unique values for each couple.  There should be two individual IDs for each couple ID.", placement = "right", options = list(container = "body")),
 						bsTooltip(id = "taskColumn", title = "Select the column that contains the task names during which measurements were made of each couple.   This column can contain multiple different tasks. (For instance, this could contain \"control\" and \"experiment\" tasks.)", placement = "right", options = list(container = "body")),
 						bsTooltip(id = "independentVarColumn", title = "Select the column that contains the variable that should be plotted on the \"x\" axis (e.g., time).", placement = "right", options = list(container = "body")),
