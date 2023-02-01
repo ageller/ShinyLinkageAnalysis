@@ -1,3 +1,5 @@
+library(colourpicker)
+
 library(shiny)
 library(shinyjs)
 library(shinythemes)
@@ -7,7 +9,6 @@ library(shinyalert)
 library(dplyr)
 library(ggplot2)
 library(grid)
-library(colourpicker)
 
 library(plotly)
 
