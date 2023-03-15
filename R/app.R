@@ -39,6 +39,7 @@ ShinyLinkageAnalysis <- function(){
 
 		# change a few styles
 		tags$head(
+			HTML("<title>LinkEx</title>"),
 			tags$style(HTML("
 				.input-group .form-control {
 					padding-left:10px;
@@ -50,7 +51,7 @@ ShinyLinkageAnalysis <- function(){
 		),
 
 		# App title and credit
-		headerPanel("Linkage Data Explorer"),
+		headerPanel("Linkage Data Explorer (LinkEx)"),
 		tags$div(style="font-size:14px; padding-left:18px; margin-bottom:20px",
 			tags$p(style="font-weight:bold","Credit: Aaron M. Geller - Northwestern University IT Research Computing Services (RCS)"),
 			tags$p("The code is available on GitHub ", tags$a(href="https://github.com/ageller/ShinyLinkageAnalysis", "here."), "For feature requests or other inquiries, please use the GitHub issues tab.  We will attempt to address any issues as time allows but cannot promise a prompt response.")
