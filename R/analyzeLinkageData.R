@@ -175,7 +175,7 @@ runCorrelationCouple <- function(df, coupleID, task, window, columnNames = data.
 }
 
 
-plotCorrelationCouple <- function(usedf, columnNames = data.frame(list(individualID = "Ind_ID", coupleID = "Couple_ID", task = "conversation", independentVar = "intervalStartTime", dependentVar = "meanIBI")), colors = c("Partner 1" = "#F8766D", "Partner 2" = "#00BFC4", "Correlation" = "black", "plimit" = "#7CAE00", "prects" = "#C77CFF"), includeFacet = c(TRUE, TRUE, TRUE), addPlimit = TRUE, plimit = 0.05, prectsAlpha = 0.3, plotPoints = c(TRUE, TRUE, TRUE), pointSize = 0.7, topHeightFac = 1, showPrects = FALSE, forPlotly = FALSE, dependentYrange = c(NA, NA), correlationMethod = "pearson"){
+plotCorrelationCouple <- function(usedf, columnNames = data.frame(list(individualID = "Ind_ID", coupleID = "Couple_ID", task = "conversation", independentVar = "intervalStartTime", dependentVar = "meanIBI")), colors = c("Partner 1" = "#F8766D", "Partner 2" = "#00BFC4", "Correlation" = "black", "plimit" = "#7CAE00", "prects" = "#C77CFF"), includeFacet = c(TRUE, TRUE, TRUE), addPlimit = TRUE, plimit = 0.05, prectsAlpha = 0.3, plotPoints = c(TRUE, TRUE, TRUE), pointSize = 0.7, topHeightFac = 1, showPrects = FALSE, forPlotly = FALSE, dependentYrange = c(NA, NA), correlationMethod = "pearson", xAxisLabel = 'Time (s)'){
 	# this assumes output from the runCorrelationCouple function
 
 	# unique people
@@ -196,9 +196,9 @@ plotCorrelationCouple <- function(usedf, columnNames = data.frame(list(individua
 	bar[columnNames$individualID] <- "Correlation"
 	bar$group <- "Correlation p-value" # added Z at the start because my previous code relies on the correlation plots being sorted at the bottom of the list (Removed later)
 
-	names(fee) <- c("Time (s)", "value", "ID", "group")
-	names(foo) <- c("Time (s)", "value", "ID", "group")
-	names(bar) <- c("Time (s)", "value", "ID", "group")
+	names(fee) <- c(xAxisLabel, "value", "ID", "group")
+	names(foo) <- c(xAxisLabel, "value", "ID", "group")
+	names(bar) <- c(xAxisLabel, "value", "ID", "group")
 	plotData <- rbind(fee, foo, bar)
 
 	groups <- unique(plotData$group)
@@ -209,7 +209,7 @@ plotCorrelationCouple <- function(usedf, columnNames = data.frame(list(individua
 	plotData <- plotData %>% filter(group %in% groups[includeFacet])
 
 	# generate the plot
-	f <- ggplot(data = plotData, aes(x = .data[["Time (s)"]], y = value, group = group, color = ID)) +
+	f <- ggplot(data = plotData, aes(x = .data[[xAxisLabel]], y = value, group = group, color = ID)) +
 		scale_color_manual(values = colors, name = "", breaks = c('Partner 1', 'Partner 2')) + 
 		facet_grid(rows = vars(group_f), scales = "free_y", switch = "y",
 			labeller = as_labeller(c())
@@ -251,7 +251,7 @@ plotCorrelationCouple <- function(usedf, columnNames = data.frame(list(individua
 
 	# if the user wants to add points, include only in the desired facets
 	if (any(plotPoints)) f <- f + geom_point(data = plotData %>% filter(group %in% groups[plotPoints]),
-			aes(x = .data[["Time (s)"]], y = value, group = group, color = ID), size = pointSize)
+			aes(x = .data[[xAxisLabel]], y = value, group = group, color = ID), size = pointSize)
 
 	# add a horizontal line to the p-value plot (beneath the other lines)
 	if (includeFacet[3] & addPlimit){

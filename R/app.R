@@ -177,9 +177,9 @@ ShinyLinkageAnalysis <- function(){
 							column(6, selectInput("task", "Task:", tasks, selected = tasks[1])),
 						),
 
-						h5("3. Select the time window for the correlation."),
+						h5("3. Select the window for the correlation."),
 						fluidRow(
-							column(10, sliderInput("windowSliderValue", "Window (seconds) :", 0, 600, 15, step = 1)),
+							column(10, sliderInput("windowSliderValue", "Window (in the units of the independent variable) :", 0, 600, 15, step = 1)),
 							column(2, textInput("windowTextValue", "", value = 15)),
 						),
 
@@ -206,7 +206,9 @@ ShinyLinkageAnalysis <- function(){
 									textInput("prectsAlpha", "Opacity for regions of significant correlation:", value = 0.3),
 									textInput("plimitVal", "Correlation p-value significance limit:", value = 0.05),
 									textInput("maxYlimit", paste("Maximum value for the y axix on the", columnNames$dependentVar, "panel (leave blank for autoscaling)"), value = NA),
-									textInput("minYlimit", paste("Minimum value for the y axix on the", columnNames$dependentVar, "panel (leave blank for autoscaling)"), value = NA)
+									textInput("minYlimit", paste("Minimum value for the y axix on the", columnNames$dependentVar, "panel (leave blank for autoscaling)"), value = NA),
+									textInput("xAxisLabel", "Label for the indendent variable axis:", value = "Time (s)"),
+
 								)
 							)
 						),
@@ -241,7 +243,7 @@ ShinyLinkageAnalysis <- function(){
 
 			# Generate the plot
 
-			f <- plotCorrelationCouple(usedf, columnNames, includeFacet = c(input$showMeasurement, input$showPC, input$showPP), addPlimit = input$showPlimit, plimit = as.numeric(input$plimitVal), plotPoints = c(input$showMeasurementPoints, input$showPCPoints, input$showPPPoints), colors = c("Partner 1" = input$partner1Color1, "Partner 2" = input$partner2Color2, "Correlation" = input$correlationColor, "plimit" = input$plimitColor, "prects" = input$prectsColor), showPrects = input$showPrects, prectsAlpha = as.numeric(input$prectsAlpha), forPlotly = TRUE, dependentYrange = c(as.numeric(input$minYlimit), as.numeric(input$maxYlimit)), correlationMethod = input$correlationMethod)
+			f <- plotCorrelationCouple(usedf, columnNames, includeFacet = c(input$showMeasurement, input$showPC, input$showPP), addPlimit = input$showPlimit, plimit = as.numeric(input$plimitVal), plotPoints = c(input$showMeasurementPoints, input$showPCPoints, input$showPPPoints), colors = c("Partner 1" = input$partner1Color1, "Partner 2" = input$partner2Color2, "Correlation" = input$correlationColor, "plimit" = input$plimitColor, "prects" = input$prectsColor), showPrects = input$showPrects, prectsAlpha = as.numeric(input$prectsAlpha), forPlotly = TRUE, dependentYrange = c(as.numeric(input$minYlimit), as.numeric(input$maxYlimit)), correlationMethod = input$correlationMethod, xAxisLabel = input$xAxisLabel)
 
 			height <- sum(c(460, 180, 180)*c(input$showMeasurement, input$showPC, input$showPP))
 			height <- max(height, 400)
