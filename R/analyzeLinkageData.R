@@ -61,6 +61,9 @@ processData <- function(df,  columnNames = data.frame(list(individualID = "Ind_I
 		}
 	}
 
+    # sort the data
+    df <- df[order(df[[columnNames$individualID]], df[[columnNames$coupleID]], df[[columnNames$task]], df[[columnNames$independentVar]]),]
+
 	return(df[! df[columnNames$coupleID] %in% bad, ])
 
 }
@@ -88,8 +91,8 @@ runCorrelationCouple <- function(df, coupleID, task, window, columnNames = data.
 
 	# create empty vectors to store the correlation coefficients and pvalues
 	nMeasurements <- nrow(usedf[usedf[[columnNames$individualID]] == Ind_IDs[useIndex],])
-	pcor <- vector("list", nMeasurements)
-	ppcor <- vector("list", nMeasurements)
+	pcor <- rep(NaN, nMeasurements)
+	ppcor <- rep(NaN, nMeasurements)
 
 	# create a reformatted output file to pass as well
 	usedf2 <- usedf[usedf[[columnNames$individualID]] == Ind_IDs[useIndex],][c(columnNames$coupleID, columnNames$task, columnNames$independentVar)]
@@ -99,25 +102,35 @@ runCorrelationCouple <- function(df, coupleID, task, window, columnNames = data.
 	# reorder columns
 	usedf2 <- usedf2[, c(columnNames$coupleID, paste0(columnNames$individualID,'_1'), paste0(columnNames$individualID,'_2'), columnNames$task, columnNames$independentVar, paste0(columnNames$dependentVar,'_1'))]
 
-	# empty vectors to stor the correlation data
-	pcor2 <- vector("list", nMeasurements)
-	ppcor2 <- vector("list", nMeasurements)
-	column_2 <- vector("list", nMeasurements)
+	# empty vectors to store the correlation data
+	pcor2 <- rep(NaN, nMeasurements)
+	ppcor2 <- rep(NaN, nMeasurements)
+	column_2 <- rep(NaN, nMeasurements)
 
 	# start value for the independent variable
-	currentXvalue = min(usedf[columnNames$independentVar])
+	# currentXvalue = floor(min(usedf[columnNames$independentVar]))
+    # the data should be already from processData so just start at the beginning
+    currentIvalue <- 1
+    currentXvalue <- usedf2[columnNames$independentVar][currentIvalue,]
 
 	# loop through the data,  select the appropriate window (value +/- offset) around that value, 
 	# and calculate the correlation coefficient
-	# I suppose for this data set, I could probably just go through by index rather than value, but that seems dangerous
-	while(currentXvalue <= max(usedf[columnNames$independentVar])){
+	while(currentIvalue <= nrow(usedf2)){
 		
 		# find the index in the array
 		# this will return two values, one for the first person and one for the second person
-		i <- which(usedf[[columnNames$independentVar]] == currentXvalue)
+        # below only works for even steps in the independentVar (and steps of 1 second)
+		# i <- which(usedf[[columnNames$independentVar]] == currentXvalue)
+        # this is more general
+        i_id1 <- which(usedf[[columnNames$independentVar]] >= currentXvalue & usedf[[columnNames$individualID]] == Ind_IDs[1])[1]
+        i_id2 <- which(usedf[[columnNames$independentVar]] >= currentXvalue & usedf[[columnNames$individualID]] == Ind_IDs[2])[1]
+        i <- c(i_id1, i_id2)
 
 		# this only has the first person
-		i2 <- which(usedf2[[columnNames$independentVar]] == currentXvalue)
+        # below only works for even steps in the independentVar (and steps of 1 second)
+		# i2 <- which(usedf2[[columnNames$independentVar]] == currentXvalue)
+        # this is more general
+        i2 <- which(usedf2[[columnNames$independentVar]] >= currentXvalue)[1]
 
 		column_2[i2] <- usedf[[columnNames$dependentVar]][i[2]]
 
@@ -160,15 +173,16 @@ runCorrelationCouple <- function(df, coupleID, task, window, columnNames = data.
 			
 
 		# increment the value by one 
-		currentXvalue <- currentXvalue + 1
+        currentIvalue <- currentIvalue + 1
+        currentXvalue <- usedf2[columnNames$independentVar][currentIvalue,]
 	}
 
-	usedf$correlation_pvalue <- as.double(ppcor)
-	usedf$correlation_coefficient <- as.double(pcor)
+	usedf$correlation_pvalue <- as.double(unlist(ppcor))
+	usedf$correlation_coefficient <- as.double(unlist(pcor))
 
-	usedf2[[paste0(columnNames$dependentVar,'_2')]] <- as.double(column_2)
-	usedf2$correlation_pvalue <- as.double(ppcor2)
-	usedf2$correlation_coefficient <- as.double(pcor2)
+	usedf2[[paste0(columnNames$dependentVar,'_2')]] <- as.double(unlist(column_2))
+	usedf2$correlation_pvalue <- as.double(unlist(ppcor2))
+	usedf2$correlation_coefficient <- as.double(unlist(pcor2))
 
 	ifelse(format == "new", return(usedf2), return(usedf))
 
@@ -277,11 +291,12 @@ plotCorrelationCouple <- function(usedf, columnNames = data.frame(list(individua
 	#   So, I will create a bunch of rects for each facet...
 	if (showPrects){
 		significantT <- usedf[[columnNames$independentVar]][usedf$correlation_pvalue < plimit & !is.na(usedf$correlation_pvalue)]
+        significantI = which(usedf$correlation_pvalue < plimit & !is.na(usedf$correlation_pvalue))
 
 		# limit these to start and end values for drawing rects
 		# https://stackoverflow.com/questions/26603858/r-how-to-find-non-sequential-elements-in-an-array
-		rectStarts <- significantT[c(TRUE, diff(significantT) != 1)]
-		rectEnds <- significantT[c(diff(significantT) != 1, TRUE)]
+		rectStarts <- significantT[c(TRUE, diff(significantI) != 1)]
+		rectEnds <- significantT[c(diff(significantI) != 1, TRUE)]
 
 		# use ggplot's annotate feature.  (Does not work well with ggplotly, see above)
 		# for (i in 1:length(rectStarts)){
