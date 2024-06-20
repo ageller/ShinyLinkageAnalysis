@@ -152,7 +152,8 @@ runCorrelationCouple <- function(df, coupleID, task, window, columnNames = data.
 
 			# if each of these subsets of data are the same length, then calculate the correlation
 			if (nrow(rows0) == nrow(rows1)){
-				if (sum(!is.na(rows0[[columnNames$dependentVar]])) > 2 & sum(!is.na(rows1[[columnNames$dependentVar]])) > 2){
+				# if (sum(!is.na(rows0[[columnNames$dependentVar]])) > 2 & sum(!is.na(rows1[[columnNames$dependentVar]])) > 2){
+                if (sum(!is.na(rows0[[columnNames$dependentVar]]) & !is.na(rows1[[columnNames$dependentVar]])) > 2){
 					havePcor <- TRUE
 					foo <- cor.test(rows0[[columnNames$dependentVar]], rows1[[columnNames$dependentVar]], method = correlationMethod, exact = FALSE)
 					pcor[i] <- foo$estimate
