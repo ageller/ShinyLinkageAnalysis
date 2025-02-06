@@ -7,7 +7,7 @@ A live version is available [here](https://northwestern-linkage-analysis.shinyap
 ## Installing as a package (recommended)
 This app, and it's dependencies, can be installed as a package using [remotes](https://github.com/r-lib/remotes) with the following command within a R session:
 ```
-remotes::install_github("ageller/ShinyLinkageAnalysis")
+remotes::install_github("rcds-dssv/ShinyLinkageAnalysis")
 ```
 
 Once installed you can run the app with (within an R session):
